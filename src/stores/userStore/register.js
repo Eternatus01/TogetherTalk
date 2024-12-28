@@ -46,7 +46,7 @@ export const useUserRegister = defineStore('userRegister', () => {
     // Добавление имени пользователя в таблицу
     const { error: insertError } = await supabase
       .from('users')
-      .insert([{ username: username.value, email: email.value }]) // Убираем пароль из вставки
+      .insert([{ username: username.value, email: email.value }])
       .select();
 
     if (insertError) {
@@ -55,6 +55,7 @@ export const useUserRegister = defineStore('userRegister', () => {
       console.log('Пользователь успешно зарегистрирован с именем пользователя:', username.value);
       await userStore.getUser (); // Обновляем состояние пользователя
       router.push('/');
+      await userStore.getUser();
     }
   }
 
