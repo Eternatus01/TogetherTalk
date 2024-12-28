@@ -10,8 +10,8 @@
         <div v-if="showChangeUsername">
           <input v-model="newUsername" type="text" name="username" id="" />
           <button @click="changeUsername">Сохранить</button>
-          <pre>error: {{ errors.getErrors }}</pre>
         </div>
+        <pre style="color: red">{{ error }}</pre>
       </div>
       <div>
         Почта: {{ email }}
@@ -19,7 +19,6 @@
         <div v-if="showChangeEmail">
           <input v-model="newEmail" type="email" name="email" id="" />
           <button @click="changeElmail">Сохранить</button>
-          <pre>error: {{ errors.getErrors }}</pre>
         </div>
       </div>
     </div>
@@ -40,8 +39,10 @@ const newEmail = ref('');
 const newUsername = ref('');
 const showChangeUsername = ref(false);
 const showChangeEmail = ref(false);
+const error = ref('');
 
 const getUser = async () => {
+  error.value = errors.getErrors();
   const res = await user.getUser();
   if (!res) return;
   username.value = res.username;
@@ -50,22 +51,26 @@ const getUser = async () => {
 
 const changeUsername = async () => {
   try {
+    errors.clearErrors();
     await changeUser.changeUsername(email.value, newUsername.value);
     getUser();
     showChangeUsername.value = false;
     newUsername.value = '';
   } catch (error) {
+    error.value = errors.getErrors();
     console.error(error);
   }
 };
 
 const changeElmail = async () => {
   try {
+    errors.clearErrors();
     await changeUser.changeEmail(email.value, newEmail.value);
     getUser();
     showChangeEmail.value = false;
     newEmail.value = '';
   } catch (error) {
+    error.value = errors.getErrors();
     console.error(error);
   }
 };

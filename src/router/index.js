@@ -21,7 +21,13 @@ const routes = [
     name: 'PersonalProfile',
     component: () => import('../pages/PersonalProfilePage.vue'),
   },
+  {
+    path: '/friends',
+    name: 'Friends',
+    component: () => import('../pages/FriendsPage.vue'),
+  },
 ];
+
 const router = createRouter({
   history: createWebHistory(),
   routes,

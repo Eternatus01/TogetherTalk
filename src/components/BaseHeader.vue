@@ -11,38 +11,39 @@
 
 <script setup>
 import { onMounted, ref, watch, computed } from 'vue';
-import { useUser  } from '../stores/userStore/user';
+import { useUser } from '../stores/userStore/user';
 
 const userStore = useUser();
 const user = ref(computed(() => userStore.user));
 const routes = ref([]);
 
-const updateUser  = async () => {
-  user.value = await userStore.getUser();
+const updateUser = async () => {
+  await userStore.getUser();
 };
 
 const logout = async () => {
   await userStore.logout();
-  await updateUser ();
+  await updateUser();
 };
 
 const updateRoutes = () => {
-  routes.value = user.value ? [
-    { path: '/', name: 'Home' },
-    { path: '/profile/personal', name: 'Profile' },
-  ] : [
-    { path: '/', name: 'Home' },
-    { path: '/login', name: 'Login' },
-    { path: '/register', name: 'Register' },
-  ];
+  routes.value = user.value
+    ? [
+        { path: '/', name: 'Home' },
+        { path: '/profile/personal', name: 'Profile' },
+        { path: '/friends', name: 'Friends' },
+      ]
+    : [
+        { path: '/', name: 'Home' },
+        { path: '/login', name: 'Login' },
+        { path: '/register', name: 'Register' },
+      ];
 };
 
 onMounted(updateUser);
-watch(user,() => {
+watch(user, () => {
   updateRoutes();
 });
-
- // Обновляем маршруты при изменении пользователя
 </script>
 
 <style lang="scss" scoped></style>

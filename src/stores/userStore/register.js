@@ -11,10 +11,9 @@ export const useUserRegister = defineStore('userRegister', () => {
   const username = ref('');
   const errors = useErrorsUser ();
   const router = useRouter();
-  const userStore = useUser (); // Получаем доступ к userStore
+  const userStore = useUser ();
 
   async function registerUser () {
-    // Проверка на уникальность имени пользователя
     const { data: existingUser , error: fetchError } = await supabase
       .from('users')
       .select('id')
@@ -32,10 +31,9 @@ export const useUserRegister = defineStore('userRegister', () => {
       return;
     }
 
-    // Регистрация нового пользователя
     const { error: signUpError } = await supabase.auth.signUp({
       email: email.value,
-      password: password.value,
+      password: password.value
     });
 
     if (signUpError) {
@@ -53,7 +51,6 @@ export const useUserRegister = defineStore('userRegister', () => {
       console.error('Ошибка при добавлении имени пользователя:', insertError);
     } else {
       console.log('Пользователь успешно зарегистрирован с именем пользователя:', username.value);
-      await userStore.getUser (); // Обновляем состояние пользователя
       router.push('/');
       await userStore.getUser();
     }

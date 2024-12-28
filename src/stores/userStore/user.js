@@ -1,19 +1,23 @@
 import { defineStore } from 'pinia';
 import supabase from '../../service/SupeBase';
 import { ref } from 'vue';
-import { useErrorsUser  } from './errors';
+import { useErrorsUser } from './errors';
 import { useRouter } from 'vue-router';
+import { useFriend } from './friend';
 
 export const useUser = defineStore('user', () => {
-  const errors = useErrorsUser ();
+  const errors = useErrorsUser();
   const router = useRouter();
+  const friends = useFriend();
   const email = ref('');
   const user = ref(null); // Храним состояние пользователя
 
-  const getUser  = async () => {
-    const { data: { user: supabaseUser  } } = await supabase.auth.getUser ();
+  const getUser = async () => {
+    const {
+      data: { user: supabaseUser },
+    } = await supabase.auth.getUser();
 
-    if (!supabaseUser ) {
+    if (!supabaseUser) {
       email.value = '';
       user.value = null; // Обновляем состояние пользователя
       return;
@@ -25,10 +29,12 @@ export const useUser = defineStore('user', () => {
       .eq('email', email.value);
 
     if (error) {
-      errors.setErrors("Пользователь не найден");
+      errors.setErrors('Пользователь не найден');
       user.value = null; // Обновляем состояние пользователя
       return;
     }
+    // Загрузка друзей пользователя
+    friends.getFriends(email.value);
     user.value = data[0]; // Обновляем состояние пользователя
     return user.value;
   };
@@ -40,5 +46,25 @@ export const useUser = defineStore('user', () => {
     router.push('/');
   };
 
-  return { getUser , logout, user }; // Возвращаем состояние пользователя
+  const getUsers = async (searchTerm = '') => {
+    await getUser();
+    const query = supabase
+      .from('users')
+      .select()
+      .neq('email', user.value.email);
+
+    if (searchTerm) {
+      query.ilike('username', `%${searchTerm}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Ошибка при получении списка пользователей:', error);
+      return [];
+    }
+    return data;
+  };
+
+  return { getUser, logout, user, getUsers };
 });

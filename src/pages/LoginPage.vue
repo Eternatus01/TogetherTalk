@@ -23,9 +23,9 @@ const errorMessages = ref(loginStore.errorMessages);
 
 const login = async () => {
   try {
-    await loginStore.loginUser();
     loginStore.email = email.value;
     loginStore.password = password.value;
+    await loginStore.loginUser();
   } catch (error) {
     console.error(error);
   }
