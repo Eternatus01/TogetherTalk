@@ -1,5 +1,11 @@
 <script setup>
+import { onMounted } from 'vue';
 import BaseHeader from './components/BaseHeader.vue';
+import { useUser } from './stores/userStore/user';
+
+const userStore = useUser();
+
+onMounted (userStore.getUser)
 </script>
 
 <template>

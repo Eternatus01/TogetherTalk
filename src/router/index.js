@@ -26,6 +26,11 @@ const routes = [
     name: 'Friends',
     component: () => import('../pages/FriendsPage.vue'),
   },
+  {
+    path: '/profile/:username',
+    name: 'Profile',
+    component: () => import('../pages/ProfilePage.vue'),
+  },
 ];
 
 const router = createRouter({

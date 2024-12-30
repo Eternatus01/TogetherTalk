@@ -5,17 +5,24 @@
       <li v-if="friends.length === 0">Список друзей пуст</li>
       <li v-for="friend in friends" :key="friend">
         {{ friend }}
-        <button>Написать сообщение</button>
-        <button>Профиль</button>
+        <button @click="message">Написать сообщение</button>
+        <button @click="routeProfile(friend)">Профиль</button>
       </li>
     </ul>
   </div>
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';
+const router = useRouter();
 defineProps({
   friends: Array,
 });
+
+const routeProfile = (friend) => {
+  router.push({ name: 'Profile', params: { username: friend } });
+};
+
 </script>
 
 <style scoped>

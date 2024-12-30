@@ -27,20 +27,21 @@ const logout = async () => {
 };
 
 const updateRoutes = () => {
-  routes.value = user.value
+  routes.value = user.value !== null
     ? [
-        { path: '/', name: 'Home' },
-        { path: '/profile/personal', name: 'Profile' },
-        { path: '/friends', name: 'Friends' },
-      ]
+      { path: '/', name: 'Home' },
+      { path: '/profile/personal', name: 'Profile' },
+      { path: '/friends', name: 'Friends' },
+    ]
     : [
-        { path: '/', name: 'Home' },
-        { path: '/login', name: 'Login' },
-        { path: '/register', name: 'Register' },
-      ];
+      { path: '/', name: 'Home' },
+      { path: '/login', name: 'Login' },
+      { path: '/register', name: 'Register' },
+    ];
 };
 
 onMounted(updateUser);
+onMounted(updateRoutes)
 watch(user, () => {
   updateRoutes();
 });
