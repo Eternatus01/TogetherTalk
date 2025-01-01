@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import supabase from '../../service/SupeBase';
+import supabase from '../../service/SupaBase';
 import { useErrorsUser  } from './errors';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';

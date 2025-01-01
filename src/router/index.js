@@ -31,11 +31,28 @@ const routes = [
     name: 'Profile',
     component: () => import('../pages/ProfilePage.vue'),
   },
+  {
+    path: '/chats',
+    name: 'Chats',
+    component: () => import('../pages/ChatsPage.vue'),
+  },
+  {
+    path: '/chats/:id',
+    name: 'ChatsDetails',
+    component: () => import('../pages/ChatsDetailsPage.vue'),
+    props: true,
+  },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+router.beforeEach((to, from, next) => {
+  const title = to.meta.title || 'Мой мессенджер';
+  document.title = title;
+  next();
 });
 
 export default router;

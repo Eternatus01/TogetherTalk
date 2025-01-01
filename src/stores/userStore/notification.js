@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import supabase from '../../service/SupeBase';
+import supabase from '../../service/SupaBase';
 import { v4 as uuidv4 } from 'uuid';
 
 export const useNotice = defineStore('notice', () => {

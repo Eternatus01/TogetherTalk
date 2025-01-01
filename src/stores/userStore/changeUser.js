@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { useErrorsUser } from './errors';
-import supabase from '../../service/SupeBase';
+import supabase from '../../service/SupaBase';
 
 export const useChangeUser = defineStore('changeUser ', () => {
   const errors = useErrorsUser();

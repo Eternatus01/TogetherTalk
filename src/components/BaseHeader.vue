@@ -32,6 +32,7 @@ const updateRoutes = () => {
       { path: '/', name: 'Home' },
       { path: '/profile/personal', name: 'Profile' },
       { path: '/friends', name: 'Friends' },
+      { path: '/chats', name: 'Chats' },
     ]
     : [
       { path: '/', name: 'Home' },

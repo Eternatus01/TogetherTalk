@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import supabase from '../../service/SupeBase';
+import supabase from '../../service/SupaBase';
 import { ref } from 'vue';
 
 export const useFriend = defineStore('friend', () => {
