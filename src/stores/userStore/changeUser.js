@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
-import { useErrorsUser  } from './errors';
+import { useErrorsUser } from './errors';
 import supabase from '../../service/SupeBase';
 
-export const useChangeUser  = defineStore('changeUser ', () => {
-  const errors = useErrorsUser ();
+export const useChangeUser = defineStore('changeUser ', () => {
+  const errors = useErrorsUser();
 
   const validateUsername = async (username) => {
     if (username.length < 3) {
@@ -40,24 +40,58 @@ export const useChangeUser  = defineStore('changeUser ', () => {
     return true;
   };
 
-  const changeUsername = async (email, newUsername) => {
+  const updateFriendsUsernames = async (oldUsername, newUsername) => {
+    // Получаем всех пользователей, у которых есть этот пользователь в друзьях
+    const { data: users, error: userError } = await supabase
+      .from('users')
+      .select('username, friends');
+
+    if (userError) {
+      console.error('Ошибка при получении пользователей:', userError);
+      return;
+    }
+
+    // Обновляем имя у всех пользователей, у которых в списке друзей есть oldUsername
+    for (const user of users) {
+      const friends = user.friends || [];
+      if (friends.includes(oldUsername)) {
+        const updatedFriends = friends.map(friend =>
+          friend === oldUsername ? newUsername : friend
+        );
+
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ friends: updatedFriends })
+          .eq('username', user.username); // Обновляем список друзей у пользователя
+
+        if (updateError) {
+          console.error('Ошибка при обновлении списка друзей у пользователя:', updateError);
+        }
+      }
+    }
+  }
+  const changeUsername = async (oldUsername, newUsername) => {
     if (!(await validateUsername(newUsername))) {
       return; // Если валидация не прошла, выходим из функции
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('users')
       .update({ username: newUsername })
-      .eq('email', email)
+      .eq('username', oldUsername)
       .select();
 
+    console.log('то что пришло ', data[0]);
     if (error) {
       errors.setErrors('Ошибка при изменении имени пользователя');
       console.error('Ошибка при изменении имени пользователя:', error);
       return;
     }
 
-    errors.clearErrors(); // Очистка ошибок после успешного изменения
+    // Обновляем имена у друзей
+    await updateFriendsUsernames(oldUsername, newUsername);
+
+    errors.clearErrors();
   };
 
   const changeEmail = async (email, newEmail) => {
@@ -65,7 +99,7 @@ export const useChangeUser  = defineStore('changeUser ', () => {
       return; // Если валидация не прошла, выходим из функции
     }
 
-    const { error } = await supabase.auth.updateUser ({
+    const { error } = await supabase.auth.updateUser({
       email: newEmail,
     });
     if (error) {

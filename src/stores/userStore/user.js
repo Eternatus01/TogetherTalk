@@ -10,7 +10,8 @@ export const useUser = defineStore('user', () => {
   const router = useRouter();
   const friends = useFriend();
   const email = ref('');
-  const user = ref(null); // Храним состояние пользователя
+  const user = ref(null);
+  const user_id = ref(null);
 
   const getUser = async () => {
     const {
@@ -34,8 +35,9 @@ export const useUser = defineStore('user', () => {
       return;
     }
     // Загрузка друзей пользователя
-    friends.getFriends(email.value);
-    user.value = data[0]; // Обновляем состояние пользователя
+    user.value = data[0];
+    user_id.value = user.value.id;
+    friends.getFriends(user_id.value);
     return user.value;
   };
 

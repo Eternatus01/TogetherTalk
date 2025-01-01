@@ -4,7 +4,7 @@
     <ul>
       <li v-if="friends.length === 0">Список друзей пуст</li>
       <li v-for="friend in friends" :key="friend">
-        {{ friend }}
+        {{ friend.username }}
         <button @click="message">Написать сообщение</button>
         <button @click="routeProfile(friend)">Профиль</button>
       </li>

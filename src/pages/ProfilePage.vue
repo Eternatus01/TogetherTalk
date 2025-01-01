@@ -17,7 +17,6 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useUser } from '../stores/userStore/user';
 
-
 const route = useRoute();
 const user = useUser();
 const username = ref('');
