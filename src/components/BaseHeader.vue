@@ -17,13 +17,8 @@ const userStore = useUser();
 const user = ref(computed(() => userStore.user));
 const routes = ref([]);
 
-const updateUser = async () => {
-  await userStore.getUser();
-};
-
 const logout = async () => {
   await userStore.logout();
-  await updateUser();
 };
 
 const updateRoutes = () => {
@@ -41,7 +36,6 @@ const updateRoutes = () => {
     ];
 };
 
-onMounted(updateUser);
 onMounted(updateRoutes)
 watch(user, () => {
   updateRoutes();

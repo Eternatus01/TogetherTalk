@@ -23,33 +23,29 @@ export const useUser = defineStore('user', () => {
       user.value = null; // Обновляем состояние пользователя
       return;
     }
+
     email.value = supabaseUser.email;
     const { data, error } = await supabase
       .from('users')
       .select()
       .eq('email', email.value);
 
-    if (error) {
-      errors.setErrors('Пользователь не найден');
-      user.value = null; // Обновляем состояние пользователя
-      return;
-    }
-    // Загрузка друзей пользователя
     user.value = data[0];
     user_id.value = user.value.id;
     friends.getFriends(user_id.value);
+    console.log('user upload');
     return user.value;
   };
 
   const logout = async () => {
     email.value = '';
     await supabase.auth.signOut();
-    user.value = null; // Обновляем состояние пользователя
+    user.value = null;
     router.push('/');
+    await getUser();
   };
 
   const getUsers = async (searchTerm = '') => {
-    await getUser();
     const query = supabase
       .from('users')
       .select()

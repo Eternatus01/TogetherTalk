@@ -5,7 +5,11 @@ import { useUser } from './stores/userStore/user';
 
 const userStore = useUser();
 
-onMounted (userStore.getUser)
+const loading = async () => {
+  console.log('Loading...');
+  await userStore.getUser();
+}
+onMounted (loading)
 </script>
 
 <template>

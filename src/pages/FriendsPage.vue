@@ -1,14 +1,14 @@
 <template>
   <div>
     <friends-list :friends="friends" />
-    <user-search :search="search" :users="users" :loadUsers="loadUsers" />
+    <user-search v-model:search="search" :search="search" :users="users" :loadUsers="loadUsers" />
     <user-list :users="users" :addFriend="addFriend" :removeFriend="removeFriend" :isFriend="isFriend"
-      :notices="notices" />
+      :notices="notices"/>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useUser } from '../stores/userStore/user';
 import { useFriend } from '../stores/userStore/friend';
 import FriendsList from '../components/FriendsList.vue';
@@ -27,10 +27,9 @@ const notices = ref([]);
 
 // Загружаем пользователей и друзей
 const loadUsers = async () => {
+  console.log(search.value);
   user.value = await userStore.getUser();
-  await loadFriends();
   users.value = await userStore.getUsers(search.value);
-  await loadFriends();
 };
 
 // Загружаем друзей
@@ -51,9 +50,8 @@ const isFriend = (id_friend) => {
 // Добавляем друг
 const addFriend = async (friend) => {
   await noticeStore.addNotice(user.value.id, friend.id, `Пользователь ${user.value.username} хочет добавить вас в друзья.`, 'addFriend');
-  await loadFriends();
   await noticeStore.addNotice(friend.id, user.value.id, `Отправлена заявка ${friend.username} `, 'sentFriend');
-  await loadNotices(); // Обновляем уведомления и block_btn
+  await loadNotices();
 };
 
 // Удаляем друга
@@ -62,6 +60,5 @@ const removeFriend = async (friend) => {
   await loadFriends();
 };
 
-onMounted(loadUsers);
 onMounted(loadNotices);
 </script>
