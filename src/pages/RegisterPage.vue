@@ -14,7 +14,6 @@
       placeholder="Password"
     />
     <button @click="registerUser">Sign Up</button>
-    <button @click="userStore.getUser">user</button>
     <pre>{{ errorMessages }}</pre>
   </div>
 </template>

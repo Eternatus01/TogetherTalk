@@ -4,12 +4,11 @@ import BaseHeader from './components/BaseHeader.vue';
 import { useUser } from './stores/userStore/user';
 
 const userStore = useUser();
+import { onBeforeMount } from 'vue';
 
-const loading = async () => {
-  console.log('Loading...');
+onBeforeMount(async () => {
   await userStore.getUser();
-}
-onMounted (loading)
+})
 </script>
 
 <template>
@@ -24,12 +23,14 @@ nav {
   display: flex;
   gap: 10px;
 }
+
 nav * {
   font-family: 'Courier New', Courier, monospace;
   text-decoration: none;
   color: black;
   font-size: 22px;
 }
+
 .container {
   display: flex;
   flex-direction: column;

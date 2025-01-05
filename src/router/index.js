@@ -33,14 +33,24 @@ const routes = [
   },
   {
     path: '/chats',
-    name: 'Chats',
     component: () => import('../pages/ChatsPage.vue'),
-  },
-  {
-    path: '/chats/:id',
-    name: 'ChatsDetails',
-    component: () => import('../pages/ChatsDetailsPage.vue'),
-    props: true,
+    children: [
+      {
+        path: '',
+        components: {
+          sidebar: () => import('../components/ChatSlideBar.vue'),
+          default: () => import('../pages/ChatDefault.vue'),
+        },
+      },
+      {
+        path: ':id',
+        components: {
+          sidebar: () => import('../components/ChatSlideBar.vue'),
+          default: () => import('../pages/ChatsDetailsPage.vue'),
+        },
+        name: 'ChatsDetails',
+      },
+    ],
   },
 ];
 

@@ -1,15 +1,17 @@
 <template>
-    <div>
-        <h1>Чат</h1>
+    <div class="messages">
         <div v-for="message in messages" :key="message.id">
             <div v-if="editingMessageId === message.id">
-                <input v-model="editedContent" placeholder="Редактировать сообщение" />
+                <input v-model="editedContent" placeholder="Редактировать сообщение"
+                    @keydown.enter="saveEditedMessage(message)" />
                 <button @click="saveEditedMessage(message)">Сохранить</button>
                 <button @click="cancelEdit">Отмена</button>
             </div>
-
-            <div v-else>
-                <strong>{{ usernames[message.sender_id] || 'Загрузка...' }}:</strong> {{ message.content }}
+            <div v-else class="asda">
+                <div class="message">
+                    <strong>{{ usernames[message.sender_id] || 'Загрузка...' }}:</strong> {{ message.content }}
+                    <pre>{{ convertTimestampToLocalTime(message.created_at) }}</pre>
+                </div>
                 <div v-if="message.sender_id === user?.id" class="dropdown">
                     <button @click="toggleDropdown(message.id)">⋮</button>
                     <div v-if="activeDropdown === message.id" class="dropdown-content">
@@ -19,17 +21,24 @@
                 </div>
             </div>
         </div>
-        <input v-model="newMessage" placeholder="Введите сообщение" @keydown.enter="sendMessage" />
-        <button @click="sendMessage">Отправить</button>
     </div>
+    <input v-model="newMessage" placeholder="Введите сообщение" @keydown.enter="sendMessage" />
+    <button @click="sendMessage">Отправить</button>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import supabase from '../service/SupaBase';
 import { useRoute } from 'vue-router';
+import { useChat } from '../stores/chatStore/chat';
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
 
+dayjs.extend(utc)
+dayjs.extend(timezone)
 const route = useRoute();
+const chatStore = useChat();
 const chatId = route.params.id;
 const messages = ref([]);
 const newMessage = ref('');
@@ -112,6 +121,11 @@ const fetchMessages = async () => {
     }
 };
 
+const scrollDown = () => {
+    const messagesContainer = document.querySelector('.messages');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
 // Функция для отправки нового сообщения
 const sendMessage = async () => {
     try {
@@ -121,6 +135,8 @@ const sendMessage = async () => {
             .insert([{ chat_id: chatId, sender_id: user.value.id, content: newMessage.value }]);
         if (error) throw error;
         newMessage.value = '';
+        await fetchMessages()
+        scrollDown()
     } catch (error) {
         handleError(error);
     }
@@ -145,6 +161,20 @@ const subscribeToMessages = () => {
         )
         .subscribe();
 };
+
+function convertTimestampToLocalTime(timestamp, userTimezone = null) {
+  // Если часовой пояс не передан, используем локальный пояс устройства
+  const timezone = userTimezone || 
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  try {
+    return dayjs.utc(timestamp).tz(timezone).format('HH:mm')
+  } catch (error) {
+    console.error('Ошибка при конвертации времени:', error)
+    // Возвращаем время в локальном часовом поясе по умолчанию
+    return dayjs.utc(timestamp).local().format('HH:mm')
+  }
+}
 
 // Функция для удаления сообщения
 const deleteMessage = async (messageId) => {
@@ -172,11 +202,19 @@ const handleError = (error) => {
     // Здесь можно добавить логику для отображения ошибок пользователю
 };
 
+watch(() => route.params.id, (newId) => {
+    if (newId) {
+        fetchMessages();
+    }
+});
+
 // Инициализация компонента
 onMounted(async () => {
+    subscribeToMessages(); // Подписываемся на новые сообщения
     await fetchUser(); // Загружаем текущего пользователя
     await fetchMessages(); // Загружаем сообщения
-    subscribeToMessages(); // Подписываемся на новые сообщения
+    scrollDown()
+    await chatStore.fetchChats();
 });
 
 // Отписка при размонтировании компонента
@@ -189,7 +227,7 @@ onUnmounted(() => {
 
 <style scoped>
 div {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 input {
@@ -201,7 +239,6 @@ button {
     padding: 0.5rem;
 }
 
-/* Стили для dropdown */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -226,5 +263,27 @@ button {
 
 .dropdown-content button:hover {
     background-color: #ddd;
+}
+
+.messages {
+    max-height: 600px;
+    overflow-y: auto;
+    background-color: #eeeeee;
+    border-radius: 24px;
+    padding: 24px;
+}
+
+.asda {
+    display: flex;
+    gap: 24px;
+}
+
+.message {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background-color: #c7c7c7;
+    padding: 4px 12px;
+    border-radius: 12px;
 }
 </style>

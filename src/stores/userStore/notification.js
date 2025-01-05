@@ -4,16 +4,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const useNotice = defineStore('notice', () => {
   const addNotice = async (sender_id, recipient_id, message, notice_type) => {
-    const currentData = await supabase
+    const { data: currentData } = await supabase
       .from('users')
       .select('notices')
       .eq('id', recipient_id)
       .single();
-
     const updatedNotices =
-      currentData.length > 0
+      currentData.notices.length > 0
         ? [
-            ...currentData[0].notices,
+            ...currentData.notices,
             { id: uuidv4(), sender_id, recipient_id, message, notice_type },
           ]
         : [{ id: uuidv4(), sender_id, recipient_id, message, notice_type }];

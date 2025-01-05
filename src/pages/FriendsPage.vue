@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useUser } from '../stores/userStore/user';
 import { useFriend } from '../stores/userStore/friend';
 import FriendsList from '../components/FriendsList.vue';
@@ -27,14 +27,15 @@ const notices = ref([]);
 
 // Загружаем пользователей и друзей
 const loadUsers = async () => {
-  console.log(search.value);
   user.value = await userStore.getUser();
   users.value = await userStore.getUsers(search.value);
 };
 
 // Загружаем друзей
 const loadFriends = async () => {
-  friends.value = await friendStore.getFriends(user.value.id);
+  if (user.value) {
+    friends.value = await friendStore.getFriends(user.value.id);
+  }
 };
 
 const loadNotices = async () => {
@@ -59,6 +60,12 @@ const removeFriend = async (friend) => {
   await friendStore.removeFriend(user.value.id, friend.id);
   await loadFriends();
 };
+
+watch(user, (newUser ) => {
+  if (newUser ) {
+    loadFriends();
+  }
+});
 
 onMounted(loadNotices);
 </script>

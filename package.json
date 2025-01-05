@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",
+    "@vueuse/core": "^12.3.0",
     "axios": "^1.7.9",
     "bun": "^1.1.42",
+    "dayjs": "^1.11.13",
     "pinia": "^2.3.0",
     "sass": "^1.83.0",
     "supabase": "^2.0.0",

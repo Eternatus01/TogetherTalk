@@ -20,7 +20,7 @@ export const useUser = defineStore('user', () => {
 
     if (!supabaseUser) {
       email.value = '';
-      user.value = null; // Обновляем состояние пользователя
+      user.value = null;
       return;
     }
 
@@ -64,5 +64,11 @@ export const useUser = defineStore('user', () => {
     return data;
   };
 
-  return { getUser, logout, user, getUsers };
+  const getUsername = async (userId) => {
+    const { data, error } = await supabase.from('users').select('username').eq('id', userId).single();
+    if (error) console.error(error);
+    return data?.username || 'Неизвестный пользователь';
+};
+
+  return { getUser, logout, user, getUsers, getUsername };
 });
