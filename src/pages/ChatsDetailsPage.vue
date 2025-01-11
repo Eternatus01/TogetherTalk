@@ -1,42 +1,47 @@
 <template>
-    <div class="messages">
-        <div v-for="message in messages" :key="message.id">
-            <div v-if="editingMessageId === message.id">
-                <input v-model="editedContent" placeholder="Редактировать сообщение"
-                    @keydown.enter="saveEditedMessage(message)" />
-                <button @click="saveEditedMessage(message)">Сохранить</button>
-                <button @click="cancelEdit">Отмена</button>
-            </div>
-            <div v-else class="asda">
-                <div class="message">
-                    <strong>{{ usernames[message.sender_id] || 'Загрузка...' }}:</strong> {{ message.content }}
-                    <pre>{{ convertTimestampToLocalTime(message.created_at) }}</pre>
+    <div class="content">
+        <div class="messages">
+            <div v-for="message in formattedMessages" :key="message.id" class="message-container">
+                <div v-if="state.editingMessageId === message.id">
+                    <input v-model="state.editedContent" placeholder="Редактировать сообщение"
+                        @keydown.enter="saveEditedMessage(message)" />
+                    <button @click="saveEditedMessage(message)">Сохранить</button>
+                    <button @click="cancelEdit">Отмена</button>
                 </div>
-                <div v-if="message.sender_id === user?.id" class="dropdown">
-                    <button @click="toggleDropdown(message.id)">⋮</button>
-                    <div v-if="activeDropdown === message.id" class="dropdown-content">
-                        <button @click="startEdit(message)">Редактировать</button>
-                        <button @click="deleteMessage(message.id)">Удалить</button>
+                <div v-else class="asda">
+                    <div class="message">
+                        <strong>{{ usernames[message.sender_id] || 'Загрузка...' }}:</strong> {{ message.content }}
+                        <pre>{{ message.formattedTime }}</pre>
+                    </div>
+                    <div v-if="message.sender_id === user?.id" class="dropdown">
+                        <button @click="toggleDropdown(message.id)">⋮</button>
+                        <div v-if="state.activeDropdown === message.id" class="dropdown-content">
+                            <button @click="startEdit(message)">Редактировать</button>
+                            <button @click="deleteMessage(message.id)">Удалить</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+        <div>
+            <input v-model="newMessage" placeholder="Введите сообщение" @keydown.enter="sendMessage" />
+            <button @click="sendMessage">Отправить</button>
+        </div>
     </div>
-    <input v-model="newMessage" placeholder="Введите сообщение" @keydown.enter="sendMessage" />
-    <button @click="sendMessage">Отправить</button>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, reactive, computed } from 'vue';
 import supabase from '../service/SupaBase';
 import { useRoute } from 'vue-router';
 import { useChat } from '../stores/chatStore/chat';
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import timezone from 'dayjs/plugin/timezone'
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
-dayjs.extend(utc)
-dayjs.extend(timezone)
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 const route = useRoute();
 const chatStore = useChat();
 const chatId = route.params.id;
@@ -45,65 +50,65 @@ const newMessage = ref('');
 const usernames = ref({});
 const user = ref(null);
 let messagesChannel = null;
-const activeDropdown = ref(null); // Для управления открытым dropdown
-const editingMessageId = ref(null); // ID сообщения, которое редактируется
-const editedContent = ref(''); // Текст редактируемого сообщения
 
-// Функция для открытия/закрытия dropdown
+const state = reactive({
+    activeDropdown: null,
+    editingMessageId: null,
+    editedContent: ''
+});
+
 const toggleDropdown = (messageId) => {
-    activeDropdown.value = activeDropdown.value === messageId ? null : messageId;
+    state.activeDropdown = state.activeDropdown === messageId ? null : messageId;
 };
 
-// Функция для начала редактирования сообщения
 const startEdit = (message) => {
-    editingMessageId.value = message.id;
-    editedContent.value = message.content;
-    activeDropdown.value = null; // Закрываем dropdown
+    state.editingMessageId = message.id;
+    state.editedContent = message.content;
+    state.activeDropdown = null;
 };
 
-// Функция для сохранения изменений
 const saveEditedMessage = async (message) => {
-    if (editedContent.value.trim() === '') return; // Проверяем, что текст не пустой
+    if (state.editedContent.trim() === '') return;
 
     const { error } = await supabase
         .from('messages')
-        .update({ content: editedContent.value })
+        .update({ content: state.editedContent })
         .eq('id', message.id);
 
     if (error) console.error(error);
     else {
-        message.content = editedContent.value; // Обновляем сообщение в списке
-        editingMessageId.value = null; // Закрываем режим редактирования
+        message.content = state.editedContent;
+        state.editingMessageId = null;
     }
 };
 
-// Функция для отмены редактирования
 const cancelEdit = () => {
-    editingMessageId.value = null;
+    state.editingMessageId = null;
 };
 
-// Функция для загрузки пользователя
+const fetchUsernames = async () => {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, username');
+        if (error) throw error;
+        data.forEach(user => {
+            usernames.value[user.id] = user.username;
+        });
+    } catch (error) {
+        console.error('Ошибка при загрузке имен пользователей:', error.message);
+    }
+};
+
 const fetchUser = async () => {
     try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         user.value = authUser;
     } catch (error) {
-        handleError(error);
+        console.error('Ошибка при загрузке пользователя:', error.message);
     }
 };
 
-// Функция для загрузки имени пользователя
-const getUsername = async (userId) => {
-    try {
-        const { data, error } = await supabase.from('users').select('username').eq('id', userId);
-        if (error) throw error;
-        usernames.value[userId] = data[0].username;
-    } catch (error) {
-        handleError(error);
-    }
-};
-
-// Функция для загрузки сообщений
 const fetchMessages = async () => {
     try {
         const { data, error } = await supabase
@@ -113,20 +118,17 @@ const fetchMessages = async () => {
             .order('created_at', { ascending: true });
         if (error) throw error;
         messages.value = data;
-        data.forEach((message) => {
-            getUsername(message.sender_id);
-        });
+        await fetchUsernames();
     } catch (error) {
-        handleError(error);
+        console.error('Ошибка при загрузке сообщений:', error.message);
     }
 };
 
 const scrollDown = () => {
     const messagesContainer = document.querySelector('.messages');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
+};
 
-// Функция для отправки нового сообщения
 const sendMessage = async () => {
     try {
         if (newMessage.value.trim() === '') return;
@@ -134,15 +136,14 @@ const sendMessage = async () => {
             .from('messages')
             .insert([{ chat_id: chatId, sender_id: user.value.id, content: newMessage.value }]);
         if (error) throw error;
+        await fetchMessages();
+        scrollDown();
         newMessage.value = '';
-        await fetchMessages()
-        scrollDown()
     } catch (error) {
-        handleError(error);
+        console.error('Ошибка при отправке сообщения:', error.message);
     }
 };
 
-// Функция для подписки на новые сообщения
 const subscribeToMessages = () => {
     messagesChannel = supabase
         .channel('messages')
@@ -152,31 +153,25 @@ const subscribeToMessages = () => {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'messages',
-                filter: `chat_id=eq.${chatId}`,
+                filter: `chat_id = eq.${chatId}`
             },
             (payload) => {
                 messages.value.push(payload.new);
-                getUsername(payload.new.sender_id);
             }
         )
         .subscribe();
 };
 
-function convertTimestampToLocalTime(timestamp, userTimezone = null) {
-  // Если часовой пояс не передан, используем локальный пояс устройства
-  const timezone = userTimezone || 
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
+const convertTimestampToLocalTime = (timestamp, userTimezone = null) => {
+    const timezone = userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    try {
+        return dayjs.utc(timestamp).tz(timezone).format('HH:mm');
+    } catch (error) {
+        console.error('Ошибка при конвертации времени:', error);
+        return dayjs.utc(timestamp).local().format('HH:mm');
+    }
+};
 
-  try {
-    return dayjs.utc(timestamp).tz(timezone).format('HH:mm')
-  } catch (error) {
-    console.error('Ошибка при конвертации времени:', error)
-    // Возвращаем время в локальном часовом поясе по умолчанию
-    return dayjs.utc(timestamp).local().format('HH:mm')
-  }
-}
-
-// Функция для удаления сообщения
 const deleteMessage = async (messageId) => {
     try {
         const message = messages.value.find((msg) => msg.id === messageId);
@@ -192,15 +187,16 @@ const deleteMessage = async (messageId) => {
             throw new Error('Вы не можете удалить это сообщение');
         }
     } catch (error) {
-        handleError(error);
+        console.error('Ошибка при удалении сообщения:', error.message);
     }
 };
 
-// Функция для обработки ошибок
-const handleError = (error) => {
-    console.error('Произошла ошибка:', error.message);
-    // Здесь можно добавить логику для отображения ошибок пользователю
-};
+const formattedMessages = computed(() => {
+    return messages.value.map(message => ({
+        ...message,
+        formattedTime: convertTimestampToLocalTime(message.created_at)
+    }));
+});
 
 watch(() => route.params.id, (newId) => {
     if (newId) {
@@ -208,19 +204,18 @@ watch(() => route.params.id, (newId) => {
     }
 });
 
-// Инициализация компонента
 onMounted(async () => {
-    subscribeToMessages(); // Подписываемся на новые сообщения
-    await fetchUser(); // Загружаем текущего пользователя
-    await fetchMessages(); // Загружаем сообщения
-    scrollDown()
+    await fetchUser();
+    await fetchUsernames();
+    await fetchMessages();
+    subscribeToMessages();
+    scrollDown();
     await chatStore.fetchChats();
 });
 
-// Отписка при размонтировании компонента
 onUnmounted(() => {
     if (messagesChannel) {
-        messagesChannel.unsubscribe(); // Отписываемся от канала
+        messagesChannel.unsubscribe();
     }
 });
 </script>
@@ -266,7 +261,7 @@ button {
 }
 
 .messages {
-    max-height: 600px;
+    height: 600px;
     overflow-y: auto;
     background-color: #eeeeee;
     border-radius: 24px;
@@ -285,5 +280,12 @@ button {
     background-color: #c7c7c7;
     padding: 4px 12px;
     border-radius: 12px;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 700px;
 }
 </style>

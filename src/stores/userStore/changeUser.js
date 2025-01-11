@@ -5,9 +5,38 @@ import supabase from '../../service/SupaBase';
 export const useChangeUser = defineStore('changeUser ', () => {
   const errors = useErrorsUser();
 
+  const updateAvatarUrl = async (userId, avatarUrl) => {
+    const { error } = await supabase
+      .from('users')
+      .update({ avatar_url: avatarUrl })
+      .eq('id', userId);
+
+    if (error) {
+      throw new Error('Ошибка при обновлении URL аватара: ' + error.message);
+    }
+  };
+
+  // В вашем changeUser  store (например, в userStore/changeUser .js)
+  const changeBirthdate = async (userId, newBirthdate) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update({ birthdate: newBirthdate })
+        .eq('id', userId);
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Ошибка при изменении даты рождения:', error);
+      throw error;
+    }
+  };
+
   const validateUsername = async (username) => {
     if (username.length < 3) {
-      errors.setErrors('Имя пользователя должно содержать не менее 3 символов.');
+      errors.setErrors(
+        'Имя пользователя должно содержать не менее 3 символов.'
+      );
       return false;
     }
 
@@ -55,7 +84,7 @@ export const useChangeUser = defineStore('changeUser ', () => {
     for (const user of users) {
       const friends = user.friends || [];
       if (friends.includes(oldUsername)) {
-        const updatedFriends = friends.map(friend =>
+        const updatedFriends = friends.map((friend) =>
           friend === oldUsername ? newUsername : friend
         );
 
@@ -65,11 +94,14 @@ export const useChangeUser = defineStore('changeUser ', () => {
           .eq('username', user.username); // Обновляем список друзей у пользователя
 
         if (updateError) {
-          console.error('Ошибка при обновлении списка друзей у пользователя:', updateError);
+          console.error(
+            'Ошибка при обновлении списка друзей у пользователя:',
+            updateError
+          );
         }
       }
     }
-  }
+  };
   const changeUsername = async (oldUsername, newUsername) => {
     if (!(await validateUsername(newUsername))) {
       return; // Если валидация не прошла, выходим из функции
@@ -123,5 +155,5 @@ export const useChangeUser = defineStore('changeUser ', () => {
     errors.clearErrors(); // Очистка ошибок после успешного изменения
   };
 
-  return { changeUsername, changeEmail };
+  return { changeUsername, changeEmail, updateAvatarUrl, changeBirthdate };
 });

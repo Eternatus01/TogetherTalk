@@ -1,14 +1,22 @@
 <script setup>
-import { onMounted } from 'vue';
 import BaseHeader from './components/BaseHeader.vue';
 import { useUser } from './stores/userStore/user';
-
+import { onMounted } from 'vue';
+import supabase  from './service/SupaBase';
 const userStore = useUser();
-import { onBeforeMount } from 'vue';
 
-onBeforeMount(async () => {
+onMounted(async () => {
   await userStore.getUser();
-})
+  await userStore.changeStatus('online');
+});
+
+window.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    userStore.changeStatus('offline');
+  } else {
+    userStore.changeStatus('online');
+  }
+});
 </script>
 
 <template>
