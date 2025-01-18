@@ -3,6 +3,7 @@ import App from './App.vue';
 import { createPinia } from 'pinia';
 import router from './router';
 import VueLazyload from 'vue-lazyload';
+import './styles/main.css'
 
 
 const pinia = createPinia();

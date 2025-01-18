@@ -1,32 +1,18 @@
 <template>
-    <img v-lazy="avatarUrl" alt="Аватар" height="100px" width="100px" class="avatar" />
-  </template>
-  
-  <script setup>
-  import { ref, onMounted, watch } from 'vue';
-  import { useUser  } from '../stores/userStore/user';
-  
-  const { getAvatar } = useUser ();
-  const props = defineProps({
-    user_id: { type: String, required: true },
-    imageUrl: { type: String, required: true }
-  });
-  
-  const avatarUrl = ref('');
-  
-  const loadAvatar = async () => {
-    avatarUrl.value = await getAvatar(props.user_id);
-  };
-  
-  onMounted(() => {
-    loadAvatar();
-  });
+  <img v-if="avatar_url" v-lazy="avatar_url" alt="Аватар" height="100px" width="100px" class="avatar" />
+  <img v-else src="https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg" alt="Аватар" height="100px" width="100px" class="avatar" />
+</template>
 
-  watch(() => props.imageUrl, loadAvatar);
-  </script>
-  
-  <style lang="scss" scoped>
-  .avatar {
-    border-radius: 50%;
-  }
-  </style>
+<script setup>
+import { computed } from 'vue';
+import { useUser } from '../stores/userStore/user';
+
+const userStore = useUser();
+const avatar_url = computed(() => userStore.avatar_url);
+</script>
+
+<style lang="scss" scoped>
+.avatar {
+  border-radius: 50%;
+}
+</style>

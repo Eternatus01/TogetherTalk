@@ -1,13 +1,8 @@
 <template>
-  <div class="container">
-    <input type="email" id="email" v-model="email" placeholder="Email" />
-    <input
-      type="password"
-      id="password"
-      v-model="password"
-      placeholder="Password"
-    />
-    <button @click="login">Войти</button>
+  <div class="form">
+    <input type="email" id="email" v-model="email" placeholder="Почта" />
+    <input type="password" id="password" v-model="password" placeholder="Пароль" />
+    <button @click="login" class="form__btn">Войти</button>
     <pre>{{ errorMessages }}</pre>
   </div>
 </template>
@@ -23,9 +18,7 @@ const errorMessages = ref(loginStore.errorMessages);
 
 const login = async () => {
   try {
-    loginStore.email = email.value;
-    loginStore.password = password.value;
-    await loginStore.loginUser();
+    await loginStore.loginUser(email.value, password.value);
   } catch (error) {
     console.error(error);
   }

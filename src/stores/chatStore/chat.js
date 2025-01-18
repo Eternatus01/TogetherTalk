@@ -23,7 +23,6 @@ export const useChat = defineStore('Chat', () => {
     
         if (error) console.error(error);
         else {
-            // Добавляем имена пользователей в каждый чат
             for (const chat of data) {
                 chat.user1_name = await userStore.getUsername(chat.user1_id);
                 chat.user2_name = await userStore.getUsername(chat.user2_id);

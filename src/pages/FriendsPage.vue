@@ -3,12 +3,12 @@
     <friends-list :friends="friends" />
     <user-search v-model:search="search" :search="search" :users="users" :loadUsers="loadUsers" />
     <user-list :users="users" :addFriend="addFriend" :removeFriend="removeFriend" :isFriend="isFriend"
-      :notices="notices"/>
+      :notices="notices" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useUser } from '../stores/userStore/user';
 import { useFriend } from '../stores/userStore/friend';
 import FriendsList from '../components/FriendsList.vue';
@@ -19,11 +19,11 @@ import { useNotice } from '../stores/userStore/notification';
 const userStore = useUser();
 const friendStore = useFriend();
 const noticeStore = useNotice();
-const friends = ref([]);
+const friends = computed(() => friendStore.friends);
 const users = ref([]);
 const user = ref();
 const search = ref('');
-const notices = ref([]);
+const notices = computed(() => noticeStore.notices);
 
 // Загружаем пользователей и друзей
 const loadUsers = async () => {
@@ -34,13 +34,13 @@ const loadUsers = async () => {
 // Загружаем друзей
 const loadFriends = async () => {
   if (user.value) {
-    friends.value = await friendStore.getFriends(user.value.id);
+    await friendStore.getFriends(user.value.id);
   }
 };
 
 const loadNotices = async () => {
   await loadUsers();
-  notices.value = await noticeStore.getNotices(user.value.id);
+  await noticeStore.getNotices(user.value.id);
 };
 
 // Проверяем, является ли пользователь другом
@@ -60,12 +60,4 @@ const removeFriend = async (friend) => {
   await friendStore.removeFriend(user.value.id, friend.id);
   await loadFriends();
 };
-
-watch(user, (newUser ) => {
-  if (newUser ) {
-    loadFriends();
-  }
-});
-
-onMounted(loadNotices);
 </script>

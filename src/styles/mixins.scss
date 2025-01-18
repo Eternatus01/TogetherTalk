@@ -1,0 +1,16 @@
+// Миксин для создания тени
+@mixin box-shadow($color) {
+  box-shadow: 0 0 10px $color;
+}
+
+// Миксин для создания градиента
+@mixin gradient($color1, $color2) {
+  background-image: linear-gradient(to bottom, $color1, $color2);
+}
+
+// Миксин для создания темной темы
+@mixin dark-theme {
+  background-color: $dark-background-color;
+  color: $dark-text-color;
+  border-color: $dark-border-color;
+}

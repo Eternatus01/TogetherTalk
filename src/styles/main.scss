@@ -1,0 +1,190 @@
+// Импорт переменных и миксинов
+@import 'variables';
+@import 'mixins';
+
+// Основной стиль
+body {
+  font-family: $font-family;
+  font-size: $base-font-size;
+  background-color: $background-color;
+  color: $text-color;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+// Стиль для header
+header {
+  padding: $padding 0;
+  text-align: center;
+}
+
+// Стиль для навигации
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  a {
+    color: white;
+    text-decoration: none;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    &:hover {
+      color: $hover-color;
+    }
+  }
+}
+
+.nav {
+  &__links {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  &__logo {
+    font-size: $font-size-title;
+  }
+
+  &__link {
+    display: flex;
+    flex-direction: column;
+  }
+
+}
+
+// Стиль для форм
+
+.form {
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  align-items: center;
+
+  * {
+    border-radius: 4px;
+  }
+
+  input {
+    width: 16rem;
+    padding: $padding;
+  }
+
+  &__btn {
+    cursor: pointer;
+    width: 18rem;
+    padding: $padding;
+    background-color: $primary-color;
+    color: #fff;
+    border: 0;
+    font-size: $font-size-heading;
+    transition: all .1s ease-in-out;
+    &:hover {
+      background-color: $primary-color-hover;
+    }
+  }
+}
+
+// Стиль для чатов
+
+.messages {
+  height: 600px;
+  overflow-y: auto;
+  background-color: $border-color;
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.message {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 12px;
+  color: white;
+
+  &__btn {
+    background-color: $border-color;
+    border: 0;
+    color: white;
+    font-size: $font-size-heading;
+  }
+}
+
+.chats__user {
+  color: white;
+  font-size: $font-size-body;
+  text-decoration: none;
+
+  &:hover {
+    color: $hover-color;
+  }
+}
+
+// Стиль для контейнера
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Стиль для темной темы
+.dark-theme {
+  @include dark-theme;
+
+  header {
+    background-color: $dark-primary-color;
+  }
+
+  nav {
+    background-color: $dark-secondary-color;
+  }
+
+  .container {
+    background-color: $dark-primary-color;
+  }
+}
+
+// Стиль для кнопок
+.button {
+  background-color: $primary-color;
+  color: $text-color;
+  border: none;
+  padding: 10px 20px;
+  font-size: $font-size-body;
+  cursor: pointer;
+  @include box-shadow($border-color);
+}
+
+// Стиль для темной темы кнопок
+.dark-theme .button {
+  background-color: $dark-primary-color;
+  color: $dark-text-color;
+  border: none;
+  padding: 10px 20px;
+  font-size: $font-size-body;
+  cursor: pointer;
+  @include box-shadow($dark-border-color);
+}
+
+// Стиль для полей ввода
+.input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: $margin;
+  border: 1px solid $border-color;
+  @include box-shadow($border-color);
+}
+
+// Стиль для темной темы полей ввода
+.dark-theme .input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid $dark-border-color;
+  background-color: $dark-secondary-color;
+  color: $dark-text-color;
+  @include box-shadow($dark-border-color);
+}

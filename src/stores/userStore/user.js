@@ -1,18 +1,21 @@
 import { defineStore } from 'pinia';
 import supabase from '../../service/SupaBase';
-import { ref } from 'vue';
-import { useErrorsUser } from './errors';
+import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useFriend } from './friend';
+import { useNotice } from './notification';
 
 export const useUser = defineStore('user', () => {
-  const errors = useErrorsUser();
   const router = useRouter();
   const friends = useFriend();
+  const noticeStore = useNotice();
   const email = ref('');
   const user = ref(null);
   const user_id = ref(null);
   const status = ref('');
+  const username = ref(null);
+  const birthdate = ref(null);
+  const avatar_url = ref(null);
 
   const getUser = async () => {
     const {
@@ -30,11 +33,15 @@ export const useUser = defineStore('user', () => {
       .from('users')
       .select()
       .eq('email', email.value);
-
     user.value = data[0];
+    console.log(user.value);
     user_id.value = user.value.id;
-    friends.getFriends(user_id.value);
     status.value = user.value.status;
+    username.value = user.value.username;
+    birthdate.value = user.value.birthdate;
+    avatar_url.value = user.value.avatar_url;
+    friends.getFriends(user_id.value);
+    noticeStore.getNotices(user_id.value);
     console.log('user upload');
     return user.value;
   };
@@ -67,7 +74,6 @@ export const useUser = defineStore('user', () => {
   };
 
   const getAvatar = async (userId) => {
-    console.log(userId);
     if (userId === null || userId === '') {
       return 'https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg?t=2025-01-08T16%3A42%3A14.026Z';
     }
@@ -76,7 +82,6 @@ export const useUser = defineStore('user', () => {
       .select('avatar_url')
       .eq('id', userId)
       .single();
-      console.log(data);
 
     return (
       data?.avatar_url ||
@@ -96,13 +101,35 @@ export const useUser = defineStore('user', () => {
 
   const changeStatus = async (status) => {
     const { data, error } = await supabase
-     .from('users')
-     .update({ status: status })
-     .eq('id', user_id.value);
-     console.log(data);
+      .from('users')
+      .update({ status: status })
+      .eq('id', user_id.value);
+  };
 
-     console.log(error);
-  }
+  watch(
+    () => user.value,
+    (newUser) => {
+      if (newUser) {
+        noticeStore.getNotices(user_id.value);
+        friends.getFriends(user_id.value);
+      }
+    },
+    { immediate: true }
+  );
 
-  return { getUser, logout, user, getUsers, getUsername, getAvatar, changeStatus, status };
+  return {
+    getUser,
+    logout,
+    getUsers,
+    getUsername,
+    getAvatar,
+    changeStatus,
+    status,
+    username,
+    birthdate,
+    avatar_url,
+    user,
+    email,
+    user_id
+  };
 });

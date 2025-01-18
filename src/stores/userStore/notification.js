@@ -1,8 +1,11 @@
 import { defineStore } from 'pinia';
 import supabase from '../../service/SupaBase';
 import { v4 as uuidv4 } from 'uuid';
+import { ref } from 'vue';
 
 export const useNotice = defineStore('notice', () => {
+  const notices = ref([]);
+
   const addNotice = async (sender_id, recipient_id, message, notice_type) => {
     const { data: currentData } = await supabase
       .from('users')
@@ -29,6 +32,7 @@ export const useNotice = defineStore('notice', () => {
       .select('notices')
       .eq('id', id_user)
       .single();
+    notices.value = data?.notices || [];
     return data?.notices || [];
   };
 
@@ -38,6 +42,7 @@ export const useNotice = defineStore('notice', () => {
       .select('notices')
       .eq('id', id_user)
       .single();
+      console.log(currentData);
     const updatedNotices = currentData.notices.filter(
       (notice) => notice.id !== id_notice
     );
@@ -65,5 +70,5 @@ export const useNotice = defineStore('notice', () => {
       .eq('id', id_recipient);
   };
 
-  return { addNotice, getNotices, removeNotice, removeSentNotice };
+  return { addNotice, getNotices, removeNotice, removeSentNotice, notices };
 });

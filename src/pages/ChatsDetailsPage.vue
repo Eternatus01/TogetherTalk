@@ -14,7 +14,7 @@
                         <pre>{{ message.formattedTime }}</pre>
                     </div>
                     <div v-if="message.sender_id === user?.id" class="dropdown">
-                        <button @click="toggleDropdown(message.id)">⋮</button>
+                        <button @click="toggleDropdown(message.id)" class="message__btn">⋮</button>
                         <div v-if="state.activeDropdown === message.id" class="dropdown-content">
                             <button @click="startEdit(message)">Редактировать</button>
                             <button @click="deleteMessage(message.id)">Удалить</button>
@@ -210,7 +210,6 @@ onMounted(async () => {
     await fetchMessages();
     subscribeToMessages();
     scrollDown();
-    await chatStore.fetchChats();
 });
 
 onUnmounted(() => {
@@ -260,26 +259,10 @@ button {
     background-color: #ddd;
 }
 
-.messages {
-    height: 600px;
-    overflow-y: auto;
-    background-color: #eeeeee;
-    border-radius: 24px;
-    padding: 24px;
-}
-
 .asda {
     display: flex;
-    gap: 24px;
-}
-
-.message {
-    display: flex;
-    gap: 8px;
     align-items: center;
-    background-color: #c7c7c7;
-    padding: 4px 12px;
-    border-radius: 12px;
+    gap: 24px;
 }
 
 .content {

@@ -1,16 +1,17 @@
 import { defineStore } from 'pinia';
 import { useErrorsUser } from './errors';
 import supabase from '../../service/SupaBase';
+import { useUser } from './user';
 
 export const useChangeUser = defineStore('changeUser ', () => {
   const errors = useErrorsUser();
-
+  const userStore = useUser();
   const updateAvatarUrl = async (userId, avatarUrl) => {
     const { error } = await supabase
       .from('users')
       .update({ avatar_url: avatarUrl })
       .eq('id', userId);
-
+    userStore.avatar_url = avatarUrl;
     if (error) {
       throw new Error('Ошибка при обновлении URL аватара: ' + error.message);
     }

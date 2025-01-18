@@ -6,27 +6,26 @@ import { useRouter } from 'vue-router';
 import { useUser } from './user'; // Импортируем userStore
 
 export const useUserLogin = defineStore('userLogin', () => {
-  const email = ref('');
-  const password = ref('');
   const errors = useErrorsUser();
   const router = useRouter();
   const userStore = useUser();
 
-  async function loginUser() {
+  async function loginUser(email, password) {
+    console.log( email, password)
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.value,
-      password: password.value,
+      email: email,
+      password: password,
     });
 
     if (signInError) {
       console.error('Ошибка при входе после авторизации:', signInError);
       errors.setErrors('Неверный логин или пароль');
     } else {
-      console.log('Пользователь успешно вошел в систему:', email.value);
+      console.log('Пользователь успешно вошел в систему:', email);
       await userStore.getUser();
       router.push('/');
     }
   }
 
-  return { loginUser, email, password };
+  return { loginUser };
 });
