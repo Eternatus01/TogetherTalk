@@ -8,7 +8,7 @@ vue, js, supabase и т.д
 
 ----------------------------------------------------------------------------------
 
-This is a small application in which users can communicate between each other.
+This is a small application in which users can communicate with each other. 
 Stack: 
 vue, js, supabase, etc.
 
