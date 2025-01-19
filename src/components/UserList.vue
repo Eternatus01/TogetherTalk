@@ -23,7 +23,7 @@ const props = defineProps({
   isFriend: Function,
   notices: {
     type: Array,
-    default: () => [], // Значение по умолчанию — пустой массив
+    default: () => [],
   },
 });
 

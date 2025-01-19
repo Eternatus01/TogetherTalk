@@ -1,6 +1,6 @@
 <template>
     <div class="content">
-        <div class="messages">
+        <div class="messages" ref="messagesContainer" @scroll="handleScroll">
             <div v-for="message in formattedMessages" :key="message.id" class="message-container">
                 <div v-if="state.editingMessageId === message.id">
                     <input v-model="state.editedContent" placeholder="Редактировать сообщение"
@@ -31,10 +31,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, reactive, computed } from 'vue';
+import { ref, onMounted, onUnmounted, reactive, computed } from 'vue';
 import supabase from '../service/SupaBase';
 import { useRoute } from 'vue-router';
-import { useChat } from '../stores/chatStore/chat';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -43,7 +42,6 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const route = useRoute();
-const chatStore = useChat();
 const chatId = route.params.id;
 const messages = ref([]);
 const newMessage = ref('');
@@ -57,78 +55,105 @@ const state = reactive({
     editedContent: ''
 });
 
-const toggleDropdown = (messageId) => {
-    state.activeDropdown = state.activeDropdown === messageId ? null : messageId;
+// Utility function for error handling
+const handleError = (error) => {
+    console.error(error.message);
 };
 
-const startEdit = (message) => {
-    state.editingMessageId = message.id;
-    state.editedContent = message.content;
-    state.activeDropdown = null;
-};
-
-const saveEditedMessage = async (message) => {
-    if (state.editedContent.trim() === '') return;
-
-    const { error } = await supabase
-        .from('messages')
-        .update({ content: state.editedContent })
-        .eq('id', message.id);
-
-    if (error) console.error(error);
-    else {
-        message.content = state.editedContent;
-        state.editingMessageId = null;
-    }
-};
-
-const cancelEdit = () => {
-    state.editingMessageId = null;
-};
-
+// Fetch usernames
 const fetchUsernames = async () => {
     try {
-        const { data, error } = await supabase
-            .from('users')
-            .select('id, username');
+        const { data, error } = await supabase.from('users').select('id, username');
         if (error) throw error;
         data.forEach(user => {
             usernames.value[user.id] = user.username;
         });
     } catch (error) {
-        console.error('Ошибка при загрузке имен пользователей:', error.message);
+        handleError(error);
     }
 };
 
-const fetchUser = async () => {
+// Fetch user
+const fetchUser  = async () => {
     try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        user.value = authUser;
+        const { data: { user: authUser  } } = await supabase.auth.getUser ();
+        user.value = authUser ;
     } catch (error) {
-        console.error('Ошибка при загрузке пользователя:', error.message);
+        handleError(error);
     }
 };
 
+// Fetch messages
 const fetchMessages = async () => {
     try {
         const { data, error } = await supabase
             .from('messages')
             .select('*')
             .eq('chat_id', chatId)
-            .order('created_at', { ascending: true });
+            .order('created_at', { ascending: false })
+            .range(0, 14);
+
         if (error) throw error;
-        messages.value = data;
+
+        messages.value = data.reverse();
         await fetchUsernames();
     } catch (error) {
-        console.error('Ошибка при загрузке сообщений:', error.message);
+        handleError(error);
     }
 };
 
+// Scroll down to the latest message
 const scrollDown = () => {
     const messagesContainer = document.querySelector('.messages');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
 
+let offset = 15; // Initial offset for loading more messages
+const limit = 15; // Number of messages to load
+
+// Fetch more messages
+const fetchMoreMessages = async () => {
+    try {
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('chat_id', chatId)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+
+        if (error) throw error;
+
+        if (data.length > 0) {
+            const messagesContainer = document.querySelector('.messages');
+            const previousScrollHeight = messagesContainer.scrollHeight;
+
+            // Add new messages to the beginning of the array
+            messages.value = [...data.reverse(), ...messages.value];
+            offset += limit;
+
+            // Use setTimeout to update scrollTop after DOM changes
+            setTimeout(() => {
+                const newScrollHeight = messagesContainer.scrollHeight;
+                const scrollDiff = newScrollHeight - previousScrollHeight;
+                messagesContainer.scrollTop += scrollDiff;
+            }, 0);
+        } else {
+            console.log('Нет больше сообщений для загрузки');
+        }
+    } catch (error) {
+        handleError(error);
+    }
+};
+
+// Handle scroll event
+const handleScroll = async (event) => {
+    const { scrollTop } = event.target;
+    if (scrollTop === 0) {
+        await fetchMoreMessages();
+    }
+};
+
+// Send message
 const sendMessage = async () => {
     try {
         if (newMessage.value.trim() === '') return;
@@ -136,42 +161,64 @@ const sendMessage = async () => {
             .from('messages')
             .insert([{ chat_id: chatId, sender_id: user.value.id, content: newMessage.value }]);
         if (error) throw error;
-        await fetchMessages();
-        scrollDown();
         newMessage.value = '';
+        await fetchLatestMessages();
+        scrollDown();
     } catch (error) {
-        console.error('Ошибка при отправке сообщения:', error.message);
+        handleError(error);
     }
 };
 
-const subscribeToMessages = () => {
-    messagesChannel = supabase
-        .channel('messages')
-        .on(
-            'postgres_changes',
-            {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'messages',
-                filter: `chat_id = eq.${chatId}`
-            },
-            (payload) => {
-                messages.value.push(payload.new);
-            }
-        )
-        .subscribe();
+// Fetch latest messages
+const fetchLatestMessages = async () => {
+    try {
+        const fiveMinutesAgo = new Date(Date.now() - 1 * 60 * 1000).toISOString();
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('chat_id', chatId)
+            .gt('created_at', fiveMinutesAgo)
+            .order('created_at', { ascending: true });
+        if (error) throw error;
+        messages.value = [...messages.value, ...data];
+    } catch (error) {
+        handleError(error);
+    }
 };
 
+// Subscribe to messages
+const subscribeToMessages = () => {
+    if (!messagesChannel) {
+        messagesChannel = supabase
+            .channel('messages')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `chat_id = eq.${chatId}`
+                },
+                (payload) => {
+                    messages.value.push(payload.new);
+                }
+            )
+            .subscribe();
+    }
+};
+
+// Convert timestamp to local time
 const convertTimestampToLocalTime = (timestamp, userTimezone = null) => {
     const timezone = userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
     try {
         return dayjs.utc(timestamp).tz(timezone).format('HH:mm');
     } catch (error) {
-        console.error('Ошибка при конвертации времени:', error);
+        handleError(error);
         return dayjs.utc(timestamp).local().format('HH:mm');
     }
 };
 
+// Delete message
 const deleteMessage = async (messageId) => {
     try {
         const message = messages.value.find((msg) => msg.id === messageId);
@@ -181,16 +228,16 @@ const deleteMessage = async (messageId) => {
                 .delete()
                 .eq('id', messageId);
             if (error) throw error;
-            const index = messages.value.findIndex((msg) => msg.id === messageId);
-            if (index !== -1) messages.value.splice(index, 1);
+            messages.value = messages.value.filter(msg => msg.id !== messageId);
         } else {
             throw new Error('Вы не можете удалить это сообщение');
         }
     } catch (error) {
-        console.error('Ошибка при удалении сообщения:', error.message);
+        handleError(error);
     }
 };
 
+// Computed property for formatted messages
 const formattedMessages = computed(() => {
     return messages.value.map(message => ({
         ...message,
@@ -198,14 +245,9 @@ const formattedMessages = computed(() => {
     }));
 });
 
-watch(() => route.params.id, (newId) => {
-    if (newId) {
-        fetchMessages();
-    }
-});
-
+// Lifecycle hooks
 onMounted(async () => {
-    await fetchUser();
+    await fetchUser ();
     await fetchUsernames();
     await fetchMessages();
     subscribeToMessages();

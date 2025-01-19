@@ -4,18 +4,20 @@ import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useFriend } from './friend';
 import { useNotice } from './notification';
+import { useChat } from '../chatStore/chat';
 
 export const useUser = defineStore('user', () => {
   const router = useRouter();
   const friends = useFriend();
   const noticeStore = useNotice();
+  const chatStore = useChat();
   const email = ref('');
   const user = ref(null);
   const user_id = ref(null);
-  const status = ref('');
   const username = ref(null);
   const birthdate = ref(null);
   const avatar_url = ref(null);
+  const usernamesCache = ref({});
 
   const getUser = async () => {
     const {
@@ -34,14 +36,10 @@ export const useUser = defineStore('user', () => {
       .select()
       .eq('email', email.value);
     user.value = data[0];
-    console.log(user.value);
     user_id.value = user.value.id;
-    status.value = user.value.status;
     username.value = user.value.username;
     birthdate.value = user.value.birthdate;
     avatar_url.value = user.value.avatar_url;
-    friends.getFriends(user_id.value);
-    noticeStore.getNotices(user_id.value);
     console.log('user upload');
     return user.value;
   };
@@ -52,6 +50,15 @@ export const useUser = defineStore('user', () => {
     user.value = null;
     router.push('/');
     await getUser();
+  };
+
+  const getUserByUsername = async (username) => {
+    const { data } = await supabase
+      .from('users')
+      .select()
+      .eq('username', username)
+
+      return data[0]
   };
 
   const getUsers = async (searchTerm = '') => {
@@ -90,13 +97,17 @@ export const useUser = defineStore('user', () => {
   };
 
   const getUsername = async (userId) => {
+    if (usernamesCache.value[userId]) {
+      return usernamesCache.value[userId];
+    }
     const { data, error } = await supabase
       .from('users')
       .select('username')
       .eq('id', userId)
       .single();
     if (error) console.error(error);
-    return data?.username || 'Неизвестный пользователь';
+    usernamesCache.value[userId] = data?.username || 'Неизвестный пользователь';
+    return usernamesCache.value[userId];
   };
 
   const changeStatus = async (status) => {
@@ -112,6 +123,7 @@ export const useUser = defineStore('user', () => {
       if (newUser) {
         noticeStore.getNotices(user_id.value);
         friends.getFriends(user_id.value);
+        chatStore.fetchChats();
       }
     },
     { immediate: true }
@@ -124,12 +136,12 @@ export const useUser = defineStore('user', () => {
     getUsername,
     getAvatar,
     changeStatus,
-    status,
+    getUserByUsername,
     username,
     birthdate,
     avatar_url,
     user,
     email,
-    user_id
+    user_id,
   };
 });

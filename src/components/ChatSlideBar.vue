@@ -21,8 +21,6 @@ const userStore = useUser();
 const chats = computed(() => chatStore.chats);
 const chatStore = useChat();
 const user = computed(() => userStore.user);
-
-
 </script>
 
 <style scoped>

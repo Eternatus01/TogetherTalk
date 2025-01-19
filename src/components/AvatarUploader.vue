@@ -1,7 +1,6 @@
 <template>
   <div>
     <display-avatar />
-    <p>Статус: {{ status }}</p>
     <div>
       <input type="file" @change="handleFileUpload" accept="image/*" />
       <button @click="uploadAvatar">Загрузить аватар</button>
@@ -31,8 +30,8 @@ const handleFileUpload = (event) => {
 
 const uploadAvatar = async () => {
   try {
-    if (avatar_url) {
-      const oldAvatarPath = `avatars/${user_id.value}/${avatar_url?.value.split('/').pop()}`;
+    if (avatar_url.value) {
+      const oldAvatarPath = `avatars/${user_id.value}/${avatar_url.value.split('/').pop()}`;
       const { error: deleteError } = await supabase.storage.from('avatars').remove([oldAvatarPath]);
       if (deleteError) {
         throw deleteError;

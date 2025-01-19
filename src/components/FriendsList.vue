@@ -17,8 +17,9 @@ import { useRouter } from 'vue-router';
 import supabase from '../service/SupaBase'; // Импортируем Supabase
 
 const router = useRouter();
-defineProps({
+const props = defineProps({
   friends: Array,
+  user: Object,
 });
 
 // Переход на страницу профиля
@@ -29,9 +30,7 @@ const routeProfile = (friend) => {
 // Создание чата и переход на страницу чата
 const routeChat = async (friend) => {
   try {
-    // Получаем текущего пользователя
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!props.user) {
       console.error('Пользователь не авторизован');
       return;
     }
@@ -40,7 +39,7 @@ const routeChat = async (friend) => {
     const { data: existingChat, error: chatError } = await supabase
       .from('chats')
       .select('*')
-      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+      .or(`user1_id.eq.${props.user.id},user2_id.eq.${props.user.id}`)
       .or(`user1_id.eq.${friend.id},user2_id.eq.${friend.id}`);
 
     if (chatError) throw chatError;
@@ -54,7 +53,7 @@ const routeChat = async (friend) => {
       // Если чата нет, создаем новый
       const { data: newChat, error: createError } = await supabase
         .from('chats')
-        .insert([{ user1_id: user.id, user2_id: friend.id }])
+        .insert([{ user1_id: props.user.id, user2_id: friend.id }])
         .select();
 
       if (createError) throw createError;

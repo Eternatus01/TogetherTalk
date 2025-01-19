@@ -1,6 +1,6 @@
 <template>
   <div>
-    <friends-list :friends="friends" />
+    <friends-list :friends="friends" :user="user" />
     <user-search v-model:search="search" :search="search" :users="users" :loadUsers="loadUsers" />
     <user-list :users="users" :addFriend="addFriend" :removeFriend="removeFriend" :isFriend="isFriend"
       :notices="notices" />
@@ -21,26 +21,13 @@ const friendStore = useFriend();
 const noticeStore = useNotice();
 const friends = computed(() => friendStore.friends);
 const users = ref([]);
-const user = ref();
+const user = computed(() => userStore.user);
 const search = ref('');
 const notices = computed(() => noticeStore.notices);
 
 // Загружаем пользователей и друзей
 const loadUsers = async () => {
-  user.value = await userStore.getUser();
   users.value = await userStore.getUsers(search.value);
-};
-
-// Загружаем друзей
-const loadFriends = async () => {
-  if (user.value) {
-    await friendStore.getFriends(user.value.id);
-  }
-};
-
-const loadNotices = async () => {
-  await loadUsers();
-  await noticeStore.getNotices(user.value.id);
 };
 
 // Проверяем, является ли пользователь другом
@@ -52,12 +39,15 @@ const isFriend = (id_friend) => {
 const addFriend = async (friend) => {
   await noticeStore.addNotice(user.value.id, friend.id, `Пользователь ${user.value.username} хочет добавить вас в друзья.`, 'addFriend');
   await noticeStore.addNotice(friend.id, user.value.id, `Отправлена заявка ${friend.username} `, 'sentFriend');
-  await loadNotices();
+  await loadUsers();
+  await friendStore.getFriends(user.value.id)
+  await noticeStore.getNotices(user.value.id)
+
 };
 
 // Удаляем друга
 const removeFriend = async (friend) => {
   await friendStore.removeFriend(user.value.id, friend.id);
-  await loadFriends();
+  await loadUsers();
 };
 </script>

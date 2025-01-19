@@ -1,7 +1,7 @@
 <template>
     <div>
-      <p>{{ label }}: {{ value }}</p>
-      <button @click="showEdit = !showEdit">Изменить</button>
+      <p>{{ label }}: {{ !value ? "Неизвестно" : value }}</p>
+      <button @click="showEdit = !showEdit">{{ !value ? "Добавить" : "Изменить" }}</button>
       <div v-if="showEdit">
         <input v-model="newValue" :type="inputType" :name="name" />
         <button @click="save">Сохранить</button>

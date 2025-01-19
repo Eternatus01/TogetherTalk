@@ -30,9 +30,9 @@ const notices = computed(() => noticeStore.notices);
 const user_id = computed(() => userStore.user.id);
 
 const acceptFriend = async (senderId, noticeId) => {
-  console.log(senderId);
   await noticeStore.removeNotice(user_id.value, noticeId);
   await friendStore.addFriend(user_id.value, senderId);
+  await friendStore.getFriends(user_id.value)
 };
 
 const cancelFriend = async (senderId, noticeId) => {
