@@ -3,10 +3,8 @@
     <AvatarUploader />
     <EditableField label="Никнейм" :value="username" inputType="text" name="username" :error="error"
       @save="changeUsername" />
-    <EditableField label="Почта" :value="email" inputType="email" name="email" :error="error" @save="changeEmail" />
     <EditableField label="Дата рождения" :value="birthdate" inputType="date" name="birthdate" :error="error"
       @save="changeBirthdate" />
-    <FriendRequests :user_id="user_id" />
   </section>
 </template>
 
@@ -16,28 +14,18 @@ import { useUser } from '../stores/userStore/user';
 import { useChangeUser } from '../stores/userStore/changeUser';
 import AvatarUploader from '../components/AvatarUploader.vue';
 import EditableField from '../components/EditableField.vue';
-import FriendRequests from '../components/FriendRequests.vue';
 
 const userStore = useUser();
 const changeUser = useChangeUser();
 
 const user_id = computed(() => userStore.user_id);
 const username = computed(() => userStore.username);
-const email = computed(() => userStore.email);
 const birthdate = computed(() => userStore.birthdate);
 const error = ref('');
 
 const changeUsername = async (newUsername) => {
   try {
     await changeUser.changeUsername(username.value, newUsername);
-  } catch (err) {
-    error.value = err.message;
-  }
-};
-
-const changeEmail = async (newEmail) => {
-  try {
-    await changeUser.changeEmail(email.value, newEmail);
   } catch (err) {
     error.value = err.message;
   }

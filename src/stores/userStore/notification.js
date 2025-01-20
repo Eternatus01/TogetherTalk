@@ -42,7 +42,6 @@ export const useNotice = defineStore('notice', () => {
       .select('notices')
       .eq('id', id_user)
       .single();
-      console.log(currentData);
     const updatedNotices = currentData.notices.filter(
       (notice) => notice.id !== id_notice
     );

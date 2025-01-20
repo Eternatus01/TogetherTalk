@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router';
 import { useFriend } from './friend';
 import { useNotice } from './notification';
 import { useChat } from '../chatStore/chat';
+import Cookies from 'js-cookie';
 
 export const useUser = defineStore('user', () => {
   const router = useRouter();
@@ -20,101 +21,147 @@ export const useUser = defineStore('user', () => {
   const usernamesCache = ref({});
 
   const getUser = async () => {
-    const {
-      data: { user: supabaseUser },
-    } = await supabase.auth.getUser();
+    try {
+      const userFromCookie = getUserFromCookie();
+      if (userFromCookie) {
+        user.value = userFromCookie;
+        user_id.value = user.value.id;
+        username.value = user.value.username;
+        birthdate.value = user.value.birthdate;
+        avatar_url.value = user.value.avatar_url;
+        return userFromCookie;
+      }
 
-    if (!supabaseUser) {
-      email.value = '';
-      user.value = null;
-      return;
+      const {
+        data: { user: supabaseUser },
+      } = await supabase.auth.getUser();
+
+      if (!supabaseUser) {
+        email.value = '';
+        user.value = null;
+        return;
+      }
+
+      email.value = supabaseUser.email;
+      const { data, error } = await supabase
+        .from('users')
+        .select()
+        .eq('email', email.value);
+      if (error) {
+        throw error;
+      }
+      user.value = data[0];
+      user_id.value = user.value.id;
+      username.value = user.value.username;
+      birthdate.value = user.value.birthdate;
+      avatar_url.value = user.value.avatar_url;
+      setUserCookie(user.value);
+      console.log('user upload');
+      return user.value;
+    } catch (error) {
+      console.error('Ошибка при получении пользователя:', error);
     }
-
-    email.value = supabaseUser.email;
-    const { data, error } = await supabase
-      .from('users')
-      .select()
-      .eq('email', email.value);
-    user.value = data[0];
-    user_id.value = user.value.id;
-    username.value = user.value.username;
-    birthdate.value = user.value.birthdate;
-    avatar_url.value = user.value.avatar_url;
-    console.log('user upload');
-    return user.value;
   };
 
   const logout = async () => {
-    email.value = '';
-    await supabase.auth.signOut();
-    user.value = null;
-    router.push('/');
-    await getUser();
+    try {
+      email.value = '';
+      await supabase.auth.signOut();
+      user.value = null;
+      Cookies.remove('user');
+      router.push('/');
+      await getUser();
+    } catch (error) {
+      console.error('Ошибка при выходе:', error);
+    }
   };
 
   const getUserByUsername = async (username) => {
-    const { data } = await supabase
-      .from('users')
-      .select()
-      .eq('username', username)
-
-      return data[0]
+    try {
+      const { data } = await supabase
+        .from('users')
+        .select()
+        .eq('username', username);
+      return data[0];
+    } catch (error) {
+      console.error('Ошибка при получении пользователя по имени:', error);
+    }
   };
 
   const getUsers = async (searchTerm = '') => {
-    const query = supabase
-      .from('users')
-      .select()
-      .neq('email', user.value.email);
+    try {
+      const query = supabase
+        .from('users')
+        .select()
+        .neq('email', user.value.email);
 
-    if (searchTerm) {
-      query.ilike('username', `%${searchTerm}%`);
-    }
+      if (searchTerm) {
+        query.ilike('username', `%${searchTerm}%`);
+      }
 
-    const { data, error } = await query;
-
-    if (error) {
+      const { data, error } = await query;
+      if (error) {
+        throw error;
+      }
+      return data;
+    } catch (error) {
       console.error('Ошибка при получении списка пользователей:', error);
       return [];
     }
-    return data;
   };
 
   const getAvatar = async (userId) => {
-    if (userId === null || userId === '') {
-      return 'https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg?t=2025-01-08T16%3A42%3A14.026Z';
+    try {
+      if (userId === null || userId === '') {
+        return 'https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg?t=2025-01-08T16%3A42%3A14.026Z';
+      }
+      const { data, error } = await supabase
+        .from('users')
+        .select('avatar_url')
+        .eq('id', userId)
+        .single();
+      if (error) {
+        throw error;
+      }
+      return (
+        data?.avatar_url ||
+        'https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg?t=2025-01-08T16%3A42%3A14.026Z'
+      );
+    } catch (error) {
+      console.error('Ошибка при получении аватара:', error);
     }
-    const { data, error } = await supabase
-      .from('users')
-      .select('avatar_url')
-      .eq('id', userId)
-      .single();
-
-    return (
-      data?.avatar_url ||
-      'https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg?t=2025-01-08T16%3A42%3A14.026Z'
-    );
   };
 
   const getUsername = async (userId) => {
-    if (usernamesCache.value[userId]) {
-      return usernamesCache.value[userId];
+    try {
+      if (usernamesCache.value[userId]) {
+        return usernamesCache.value[userId];
+      }
+
+      const { data } = await supabase
+        .from('users')
+        .select('username')
+        .eq('id', userId)
+        .single();
+      usernamesCache.value[userId] = data.username;
+      return data.username;
+    } catch (error) {
+      console.error('Ошибка при получении имени пользователя:', error);
     }
-    const { data, error } = await supabase
-      .from('users')
-      .select('username')
-      .eq('id', userId)
-      .single();
-    if (error) console.error(error);
-    usernamesCache.value[userId] = data?.username || 'Неизвестный пользователь';
-    return usernamesCache.value[userId];
   };
 
   const changeStatus = async (status) => {
-    const { data, error } = await supabase
-      .from('users')
-      .update({ status: status })
-      .eq('id', user_id.value);
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update({ status: status })
+        .eq('id', user_id.value);
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Ошибка при изменении статуса:', error);
+    }
   };
 
   watch(
@@ -145,3 +192,17 @@ export const useUser = defineStore('user', () => {
     user_id,
   };
 });
+
+const getUserFromCookie = () => {
+  const userCookie = Cookies.get('user');
+  if (userCookie) {
+    return JSON.parse(userCookie);
+  }
+  return null;
+};
+
+const setUserCookie = (user) => {
+  Cookies.set('user', JSON.stringify(user), {
+    expires: 30, // сохранить на 30 день
+  });
+};

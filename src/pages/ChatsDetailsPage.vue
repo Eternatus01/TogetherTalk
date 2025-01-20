@@ -1,32 +1,10 @@
 <template>
     <div class="content">
-        <div class="messages" ref="messagesContainer" @scroll="handleScroll">
-            <div v-for="message in formattedMessages" :key="message.id" class="message-container">
-                <div v-if="state.editingMessageId === message.id">
-                    <input v-model="state.editedContent" placeholder="Редактировать сообщение"
-                        @keydown.enter="saveEditedMessage(message)" />
-                    <button @click="saveEditedMessage(message)">Сохранить</button>
-                    <button @click="cancelEdit">Отмена</button>
-                </div>
-                <div v-else class="asda">
-                    <div class="message">
-                        <strong>{{ usernames[message.sender_id] || 'Загрузка...' }}:</strong> {{ message.content }}
-                        <pre>{{ message.formattedTime }}</pre>
-                    </div>
-                    <div v-if="message.sender_id === user?.id" class="dropdown">
-                        <button @click="toggleDropdown(message.id)" class="message__btn">⋮</button>
-                        <div v-if="state.activeDropdown === message.id" class="dropdown-content">
-                            <button @click="startEdit(message)">Редактировать</button>
-                            <button @click="deleteMessage(message.id)">Удалить</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div>
-            <input v-model="newMessage" placeholder="Введите сообщение" @keydown.enter="sendMessage" />
-            <button @click="sendMessage">Отправить</button>
-        </div>
+        <MessagesList :messages="formattedMessages" :usernames="usernames" :avatars="avatars" :user="user"
+            :editing-message-id="state.editingMessageId" :edited-content="state.editedContent" @scroll="handleScroll"
+            @start-edit="startEdit" @save-edit="saveEditedMessage" @cancel-edit="cancelEdit"
+            @delete-message="deleteMessage" @update:edited-content="updateEditedContent" />
+        <MessageInput v-model="newMessage" @send="sendMessage" />
     </div>
 </template>
 
@@ -37,17 +15,24 @@ import { useRoute } from 'vue-router';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { useUser } from '../stores/userStore/user';
+import { debounce } from 'lodash';
+
+import MessagesList from '../components/MessagesList.vue';
+import MessageInput from '../components/MessageInput.vue';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const route = useRoute();
+const userStore = useUser();
 const chatId = route.params.id;
 const messages = ref([]);
 const newMessage = ref('');
 const usernames = ref({});
-const user = ref(null);
+const user = computed(() => userStore.user)
 let messagesChannel = null;
+const avatars = ref({});
 
 const state = reactive({
     activeDropdown: null,
@@ -55,29 +40,60 @@ const state = reactive({
     editedContent: ''
 });
 
-// Utility function for error handling
-const handleError = (error) => {
-    console.error(error.message);
+const updateEditedContent = (content) => {
+    state.editedContent = content;
 };
 
-// Fetch usernames
-const fetchUsernames = async () => {
+const saveEditedMessage = async () => {
     try {
-        const { data, error } = await supabase.from('users').select('id, username');
+        if (!state.editingMessageId) return;
+
+        const { error } = await supabase
+            .from('messages')
+            .update({ content: state.editedContent })
+            .eq('id', state.editingMessageId);
+
         if (error) throw error;
-        data.forEach(user => {
-            usernames.value[user.id] = user.username;
-        });
+
+        await fetchMessages();
+
+        // Сбрасываем состояние редактирования
+        state.activeDropdown = null;
+        state.editingMessageId = null;
+        state.editedContent = '';
     } catch (error) {
         handleError(error);
     }
 };
 
-// Fetch user
-const fetchUser  = async () => {
+const startEdit = (message) => {
+    state.editingMessageId = message.id;
+    state.editedContent = message.content;
+    state.activeDropdown = null;
+};
+
+const cancelEdit = () => {
+    state.editingMessageId = null;
+    state.editedContent = '';
+};
+
+
+const handleError = (error) => {
+    console.error(error.message);
+};
+
+// Fetch usernames
+const fetchUsernamesAndAvatars = async () => {
     try {
-        const { data: { user: authUser  } } = await supabase.auth.getUser ();
-        user.value = authUser ;
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, username, avatar_url');
+        if (error) throw error;
+
+        for (const user of data) {
+            usernames.value[user.id] = user.username;
+            avatars.value[user.id] = user.avatar_url;
+        }
     } catch (error) {
         handleError(error);
     }
@@ -95,8 +111,7 @@ const fetchMessages = async () => {
 
         if (error) throw error;
 
-        messages.value = data.reverse();
-        await fetchUsernames();
+        messages.value = data.reverse() || [];
     } catch (error) {
         handleError(error);
     }
@@ -108,8 +123,8 @@ const scrollDown = () => {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
 
-let offset = 15; // Initial offset for loading more messages
-const limit = 15; // Number of messages to load
+let offset = 15;
+const limit = 15;
 
 // Fetch more messages
 const fetchMoreMessages = async () => {
@@ -146,12 +161,12 @@ const fetchMoreMessages = async () => {
 };
 
 // Handle scroll event
-const handleScroll = async (event) => {
+const handleScroll = debounce(async (event) => {
     const { scrollTop } = event.target;
     if (scrollTop === 0) {
         await fetchMoreMessages();
     }
-};
+}, 200);
 
 // Send message
 const sendMessage = async () => {
@@ -180,7 +195,8 @@ const fetchLatestMessages = async () => {
             .gt('created_at', fiveMinutesAgo)
             .order('created_at', { ascending: true });
         if (error) throw error;
-        messages.value = [...messages.value, ...data];
+        const newMessages = data.filter(msg => !messages.value.find(m => m.id === msg.id));
+        messages.value = [...messages.value, ...newMessages];
     } catch (error) {
         handleError(error);
     }
@@ -194,13 +210,16 @@ const subscribeToMessages = () => {
             .on(
                 'postgres_changes',
                 {
-                    event: 'INSERT',
+                    event: '*',
                     schema: 'public',
                     table: 'messages',
-                    filter: `chat_id = eq.${chatId}`
+                    filter: `chat_id=eq.${chatId}`
                 },
                 (payload) => {
-                    messages.value.push(payload.new);
+                    const index = messages.value.findIndex(msg => msg.id === payload.new.id);
+                    if (index !== -1) {
+                        messages.value[index] = payload.new;
+                    }
                 }
             )
             .subscribe();
@@ -223,12 +242,14 @@ const deleteMessage = async (messageId) => {
     try {
         const message = messages.value.find((msg) => msg.id === messageId);
         if (message && message.sender_id === user.value.id) {
+            messages.value = messages.value.filter(msg => msg.id !== messageId);
             const { error } = await supabase
                 .from('messages')
                 .delete()
                 .eq('id', messageId);
-            if (error) throw error;
-            messages.value = messages.value.filter(msg => msg.id !== messageId);
+            if (error) {
+                throw error;
+            }
         } else {
             throw new Error('Вы не можете удалить это сообщение');
         }
@@ -239,6 +260,7 @@ const deleteMessage = async (messageId) => {
 
 // Computed property for formatted messages
 const formattedMessages = computed(() => {
+    if (!messages.value) return [];
     return messages.value.map(message => ({
         ...message,
         formattedTime: convertTimestampToLocalTime(message.created_at)
@@ -247,11 +269,10 @@ const formattedMessages = computed(() => {
 
 // Lifecycle hooks
 onMounted(async () => {
-    await fetchUser ();
-    await fetchUsernames();
     await fetchMessages();
-    subscribeToMessages();
     scrollDown();
+    subscribeToMessages();
+    await fetchUsernamesAndAvatars();
 });
 
 onUnmounted(() => {

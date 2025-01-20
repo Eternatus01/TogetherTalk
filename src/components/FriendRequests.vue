@@ -33,15 +33,19 @@ const acceptFriend = async (senderId, noticeId) => {
   await noticeStore.removeNotice(user_id.value, noticeId);
   await friendStore.addFriend(user_id.value, senderId);
   await friendStore.getFriends(user_id.value)
+  await noticeStore.getNotices(user_id.value)
 };
 
 const cancelFriend = async (senderId, noticeId) => {
   await noticeStore.removeNotice(user_id.value, noticeId);
   await friendStore.addNotice(user_id.value, senderId, `Пользователь отменил ваш запрос в друзья`, 'cancelFriend');
+  await noticeStore.getNotices(user_id.value)
+
 };
 
 const acceptNotice = async (noticeId) => {
   await noticeStore.removeNotice(user_id.value, noticeId);
+  await noticeStore.getNotices(user_id.value)
 };
 </script>
 

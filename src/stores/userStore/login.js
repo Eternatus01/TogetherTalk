@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import supabase from '../../service/SupaBase';
-import { ref } from 'vue';
 import { useErrorsUser } from './errors';
 import { useRouter } from 'vue-router';
 import { useUser } from './user'; // Импортируем userStore
@@ -11,7 +10,6 @@ export const useUserLogin = defineStore('userLogin', () => {
   const userStore = useUser();
 
   async function loginUser(email, password) {
-    console.log( email, password)
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,

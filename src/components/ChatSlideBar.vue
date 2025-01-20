@@ -4,7 +4,7 @@
         <ul>
             <li v-if="chats.length === 0">У вас пока нет чатов</li>
             <li v-for="chat in chats" :key="chat.id">
-                <router-link :to="`/chats/${chat.id}`" class="chats__user">
+                <router-link v-if="user" :to="`/chats/${chat.id}`" class="chats__user">
                     {{ chat.user1_id === user.id ? chat.user2_name : chat.user1_name }}
                 </router-link>
             </li>

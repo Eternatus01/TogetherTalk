@@ -38,6 +38,7 @@ const updateRoutes = () => {
       { path: '/profile/personal', name: 'Профиль', icon: markRaw(ProfileIcon) },
       { path: '/friends', name: 'Друзья', icon: markRaw(FriendsIcon) },
       { path: '/chats', name: 'Чаты', icon: markRaw(ChatIcon) },
+      { path: '/notices', name: 'Уведомления' },
     ]
     : [
       { path: '/login', name: 'Вход' },
