@@ -1,1 +1,0 @@
-import{_ as a,c,b as s,g as r,x as n,y as _,o}from"./index-B_YhoeON.js";const d={},i={class:"chat-page"},l={class:"sidebar"},f={class:"content"};function p(t,h){const e=_("router-view");return o(),c("div",i,[s("div",l,[r(e,{name:"sidebar"})]),s("div",f,[(o(),n(e,{key:t.$route.fullPath}))])])}const u=a(d,[["render",p],["__scopeId","data-v-5bd3aff1"]]);export{u as default};
