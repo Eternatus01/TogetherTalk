@@ -1,43 +1,53 @@
 <template>
   <section>
     <AvatarUploader />
-    <EditableField label="Никнейм" :value="username" inputType="text" name="username" :error="error"
-      @save="changeUsername" />
-    <EditableField label="Дата рождения" :value="birthdate" inputType="date" name="birthdate" :error="error"
-      @save="changeBirthdate" />
+    <EditableField 
+      label="Никнейм" 
+      :value="userData.username" 
+      inputType="text" 
+      name="username" 
+      :error="error"
+      @save="updateProfileField('username', $event)"
+    />
+    <EditableField 
+      label="Дата рождения" 
+      :value="formattedBirthdate" 
+      inputType="date" 
+      name="birthdate" 
+      :error="error"
+      @save="updateProfileField('birthdate', $event)"
+    />
   </section>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { useUser } from '../stores/userStore/user';
-import { useChangeUser } from '../stores/userStore/changeUser';
 import AvatarUploader from '../components/AvatarUploader.vue';
 import EditableField from '../components/EditableField.vue';
 
 const userStore = useUser();
-const changeUser = useChangeUser();
-
-const user_id = computed(() => userStore.user_id);
-const username = computed(() => userStore.username);
-const birthdate = computed(() => userStore.birthdate);
 const error = ref('');
 
-const changeUsername = async (newUsername) => {
-  try {
-    await changeUser.changeUsername(username.value, newUsername);
-  } catch (err) {
-    error.value = err.message;
-  }
-};
+// Получаем данные пользователя
+const userData = computed(() => userStore.user || {});
+const formattedBirthdate = computed(() => {
+  if (!userData.value.birthdate) return '';
+  return new Date(userData.value.birthdate).toISOString().split('T')[0];
+});
 
-const changeBirthdate = async (newBirthdate) => {
+// Универсальный метод обновления полей
+const updateProfileField = async (field, newValue) => {
   try {
-    await changeUser.changeBirthdate(user_id.value, newBirthdate);
+    error.value = '';
+    await userStore.updateProfile({ [field]: newValue });
   } catch (err) {
-    error.value = err.message;
+    error.value = err.message || 'Ошибка при обновлении данных';
+    console.error('Update error:', err);
   }
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+/* Ваши стили */
+</style>

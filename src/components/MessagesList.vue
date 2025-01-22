@@ -23,10 +23,28 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, defineExpose, ref } from 'vue';
 import MessageItem from './MessageItem.vue';
 import MessageEditForm from './MessageEditForm.vue';
+const container = ref(null);
 
+const scrollToBottom = () => {
+  if (container.value) {
+    container.value.scrollTop = container.value.scrollHeight;
+  }
+};
+
+// Добавляем метод для обновления позиции прокрутки при загрузке истории
+const adjustScrollPosition = (prevHeight) => {
+  if (container.value) {
+    container.value.scrollTop = container.value.scrollHeight - prevHeight;
+  }
+};
+
+defineExpose({
+  scrollToBottom,
+  adjustScrollPosition
+});
 const props = defineProps({
     messages: Array,
     usernames: Object,

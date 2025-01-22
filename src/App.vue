@@ -5,7 +5,7 @@ import { onMounted } from 'vue';
 const userStore = useUser();
 
 onMounted(async () => {
-  await userStore.getUser();
+  await userStore.fetchUser()
 });
 </script>
 

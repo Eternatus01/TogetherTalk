@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import supabase from '../../service/SupaBase';
-import { ref, watch } from 'vue';
+import { ref, watch, computed, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useFriend } from './friend';
 import { useNotice } from './notification';
@@ -12,197 +12,233 @@ export const useUser = defineStore('user', () => {
   const friends = useFriend();
   const noticeStore = useNotice();
   const chatStore = useChat();
-  const email = ref('');
-  const user = ref(null);
-  const user_id = ref(null);
-  const username = ref(null);
-  const birthdate = ref(null);
-  const avatar_url = ref(null);
-  const usernamesCache = ref({});
 
-  const getUser = async () => {
-    try {
-      const userFromCookie = getUserFromCookie();
-      if (userFromCookie) {
-        user.value = userFromCookie;
-        user_id.value = user.value.id;
-        username.value = user.value.username;
-        birthdate.value = user.value.birthdate;
-        avatar_url.value = user.value.avatar_url;
-        return userFromCookie;
-      }
+  // Состояние
+  const state = reactive({
+    currentUser: null,
+    email: '',
+    username: null,
+    birthdate: null,
+    avatar_url: null,
+    usernamesCache: {},
+    session: null,
+  });
 
-      const {
-        data: { user: supabaseUser },
-      } = await supabase.auth.getUser();
+  // Геттеры
+  const isAuthenticated = computed(() => !!state.currentUser);
+  const userId = computed(() => state.currentUser?.id || null);
 
-      if (!supabaseUser) {
-        email.value = '';
-        user.value = null;
-        return;
-      }
-
-      email.value = supabaseUser.email;
-      const { data, error } = await supabase
-        .from('users')
-        .select()
-        .eq('email', email.value);
-      if (error) {
-        throw error;
-      }
-      user.value = data[0];
-      user_id.value = user.value.id;
-      username.value = user.value.username;
-      birthdate.value = user.value.birthdate;
-      avatar_url.value = user.value.avatar_url;
-      setUserCookie(user.value);
-      console.log('user upload');
-      return user.value;
-    } catch (error) {
-      console.error('Ошибка при получении пользователя:', error);
-    }
+  // Общие методы
+  const handleError = (error, context = '') => {
+    console.error(`[User Store Error] ${context}:`, error);
+    throw error;
   };
 
-  const logout = async () => {
-    try {
-      email.value = '';
-      await supabase.auth.signOut();
-      user.value = null;
-      Cookies.remove('user');
-      router.push('/');
-      await getUser();
-    } catch (error) {
-      console.error('Ошибка при выходе:', error);
-    }
+  const setSessionCookie = (sessionData) => {
+    Cookies.set('userSession', JSON.stringify(sessionData), {
+      expires: 30,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
   };
 
-  const getUserByUsername = async (username) => {
-    try {
-      const { data } = await supabase
-        .from('users')
-        .select()
-        .eq('username', username);
-      return data[0];
-    } catch (error) {
-      console.error('Ошибка при получении пользователя по имени:', error);
-    }
+  // Действия
+  const actions = {
+    async fetchUser() {
+      try {
+        // Проверка куки
+        const sessionCookie = Cookies.get('userSession');
+        if (sessionCookie) {
+          const session = JSON.parse(sessionCookie);
+          const { data: userData } = await supabase
+            .from('users')
+            .select()
+            .eq('id', session.userId)
+            .single();
+
+          if (userData) {
+            this.updateUserState(userData);
+            return userData;
+          }
+        }
+
+        // Получение пользователя из Supabase Auth
+        const {
+          data: { user: authUser },
+          error: authError,
+        } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!authUser) return null;
+
+        // Получение данных из таблицы users
+        const { data: userData, error: dbError } = await supabase
+          .from('users')
+          .select()
+          .eq('email', authUser.email)
+          .single();
+
+        if (dbError) throw dbError;
+
+        this.updateUserState(userData);
+        setSessionCookie({ userId: userData.id });
+        return userData;
+      } catch (error) {
+        handleError(error, 'fetchUser');
+        return null;
+      }
+    },
+
+    updateUserState(userData) {
+      state.currentUser = userData;
+      state.email = userData.email;
+      state.username = userData.username;
+      state.birthdate = userData.birthdate;
+      state.avatar_url = userData.avatar_url;
+    },
+
+    async logout() {
+      try {
+        await supabase.auth.signOut();
+        state.currentUser = null;
+        Cookies.remove('userSession');
+        router.push('/');
+      } catch (error) {
+        handleError(error, 'logout');
+      }
+    },
+
+    async getUsers(searchTerm = '') {
+      try {
+        if (!state.currentUser) throw new Error('User not authenticated');
+
+        let query = supabase
+          .from('users')
+          .select('id, username, avatar_url')
+          .neq('id', state.currentUser.id);
+
+        if (searchTerm) {
+          query = query.ilike('username', `%${searchTerm}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        return data;
+      } catch (error) {
+        handleError(error, 'getUsers');
+        return [];
+      }
+    },
+
+    async getAvatar(userId) {
+      const defaultAvatar =
+        'https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg';
+
+      try {
+        if (!userId) return defaultAvatar;
+
+        const { data, error } = await supabase
+          .from('users')
+          .select('avatar_url')
+          .eq('id', userId)
+          .single();
+
+        return error ? defaultAvatar : data.avatar_url || defaultAvatar;
+      } catch (error) {
+        return defaultAvatar;
+      }
+    },
+
+    async getUsername(userId) {
+      try {
+        if (!userId) return 'Unknown User';
+        if (state.usernamesCache[userId]) return state.usernamesCache[userId];
+
+        const { data, error } = await supabase
+          .from('users')
+          .select('username')
+          .eq('id', userId)
+          .single();
+
+        if (!error && data.username) {
+          state.usernamesCache[userId] = data.username;
+          return data.username;
+        }
+        return 'Unknown User';
+      } catch (error) {
+        return 'Unknown User';
+      }
+    },
+
+    async updateProfile(updates) {
+      try {
+        if (!state.currentUser) throw new Error('User not authenticated');
+
+        const { data, error } = await supabase
+          .from('users')
+          .update(updates)
+          .eq('id', state.currentUser.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        this.updateUserState({ ...state.currentUser, ...data });
+        return data;
+      } catch (error) {
+        handleError(error, 'updateProfile');
+      }
+    },
+
+    async changeStatus(status) {
+      try {
+        if (!state.currentUser) throw new Error('User not authenticated');
+
+        const { error } = await supabase
+          .from('users')
+          .update({ status })
+          .eq('id', state.currentUser.id);
+
+        if (error) throw error;
+      } catch (error) {
+        handleError(error, 'changeStatus');
+      }
+    },
   };
 
-  const getUsers = async (searchTerm = '') => {
-    try {
-      const query = supabase
-        .from('users')
-        .select()
-        .neq('email', user.value.email);
-
-      if (searchTerm) {
-        query.ilike('username', `%${searchTerm}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) {
-        throw error;
-      }
-      return data;
-    } catch (error) {
-      console.error('Ошибка при получении списка пользователей:', error);
-      return [];
-    }
-  };
-
-  const getAvatar = async (userId) => {
-    try {
-      if (userId === null || userId === '') {
-        return 'https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg?t=2025-01-08T16%3A42%3A14.026Z';
-      }
-      const { data, error } = await supabase
-        .from('users')
-        .select('avatar_url')
-        .eq('id', userId)
-        .single();
-      if (error) {
-        throw error;
-      }
-      return (
-        data?.avatar_url ||
-        'https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg?t=2025-01-08T16%3A42%3A14.026Z'
-      );
-    } catch (error) {
-      console.error('Ошибка при получении аватара:', error);
-    }
-  };
-
-  const getUsername = async (userId) => {
-    try {
-      if (usernamesCache.value[userId]) {
-        return usernamesCache.value[userId];
-      }
-
-      const { data } = await supabase
-        .from('users')
-        .select('username')
-        .eq('id', userId)
-        .single();
-      usernamesCache.value[userId] = data.username;
-      return data.username;
-    } catch (error) {
-      console.error('Ошибка при получении имени пользователя:', error);
-    }
-  };
-
-  const changeStatus = async (status) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .update({ status: status })
-        .eq('id', user_id.value);
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error('Ошибка при изменении статуса:', error);
-    }
-  };
-
+  // Наблюдатели
   watch(
-    () => user.value,
-    (newUser) => {
-      if (newUser) {
-        noticeStore.getNotices(user_id.value);
-        friends.getFriends(user_id.value);
+    () => state.currentUser,
+    (user) => {
+      if (user) {
+        noticeStore.getNotices(user.id);
+        friends.getFriends(user.id);
         chatStore.fetchChats();
       }
     },
     { immediate: true }
   );
 
+  // Инициализация
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT') {
+      state.currentUser = null;
+      Cookies.remove('userSession');
+    }
+  });
+
   return {
-    getUser,
-    logout,
-    getUsers,
-    getUsername,
-    getAvatar,
-    changeStatus,
-    getUserByUsername,
-    username,
-    birthdate,
-    avatar_url,
-    user,
-    email,
-    user_id,
+    email: computed(() => state.email),
+    username: computed(() => state.username),
+    birthdate: computed(() => state.birthdate),
+    avatar_url: computed(() => state.avatar_url),
+    user: computed(() => state.currentUser),
+    userId,
+
+    // Геттеры
+    isAuthenticated,
+
+    // Действия
+    ...actions,
   };
 });
-
-const getUserFromCookie = () => {
-  const userCookie = Cookies.get('user');
-  if (userCookie) {
-    return JSON.parse(userCookie);
-  }
-  return null;
-};
-
-const setUserCookie = (user) => {
-  Cookies.set('user', JSON.stringify(user), {
-    expires: 30, // сохранить на 30 день
-  });
-};
