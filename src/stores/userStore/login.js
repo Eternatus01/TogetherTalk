@@ -20,7 +20,7 @@ export const useUserLogin = defineStore('userLogin', () => {
       errors.setErrors('Неверный логин или пароль');
     } else {
       console.log('Пользователь успешно вошел в систему:', email);
-      await userStore.getUser();
+      await userStore.fetchUser();
       router.push('/');
     }
   }

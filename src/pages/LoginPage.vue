@@ -1,7 +1,7 @@
 <template>
   <div class="form">
-    <input type="email" id="email" v-model="email" placeholder="Почта" />
-    <input type="password" id="password" v-model="password" placeholder="Пароль" />
+    <input type="email" id="email" v-model="email" placeholder="Почта" maxlength="25" />
+    <input type="password" id="password" v-model="password" placeholder="Пароль" maxlength="20" />
     <button @click="login" class="form__btn">Войти</button>
     <pre>{{ errorMessages }}</pre>
   </div>

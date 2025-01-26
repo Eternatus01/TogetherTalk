@@ -52,7 +52,7 @@ export const useUserRegister = defineStore('userRegister', () => {
     } else {
       console.log('Пользователь успешно зарегистрирован с именем пользователя:', username.value);
       router.push('/');
-      await userStore.getUser();
+      await userStore.fetchUser();
     }
   }
 

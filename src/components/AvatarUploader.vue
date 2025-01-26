@@ -53,4 +53,8 @@ const uploadAvatar = async () => {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+* {
+  color: black;
+}
+</style>

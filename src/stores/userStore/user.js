@@ -25,7 +25,7 @@ export const useUser = defineStore('user', () => {
   });
 
   // Геттеры
-  const isAuthenticated = computed(() => !!state.currentUser);
+  const isAuthenticated = computed(() => state.currentUser);
   const userId = computed(() => state.currentUser?.id || null);
 
   // Общие методы
@@ -127,6 +127,21 @@ export const useUser = defineStore('user', () => {
       } catch (error) {
         handleError(error, 'getUsers');
         return [];
+      }
+    },
+
+    async getUserByUsername(username) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('username', username)
+          .single();
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        handleError(error, 'getUserByUsername');
+        return null;
       }
     },
 

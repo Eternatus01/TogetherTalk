@@ -2,10 +2,13 @@
 import BaseHeader from './components/BaseHeader.vue';
 import { useUser } from './stores/userStore/user';
 import { onMounted } from 'vue';
+import Cookies from 'js-cookie';
+
 const userStore = useUser();
+const sessionCookie = Cookies.get('userSession');
 
 onMounted(async () => {
-  await userStore.fetchUser()
+  if (sessionCookie) await userStore.fetchUser()
 });
 </script>
 
@@ -16,5 +19,4 @@ onMounted(async () => {
   </div>
 </template>
 
-<style lang="scss">
-</style>
+<style lang="scss"></style>

@@ -1,8 +1,8 @@
 <template>
   <div class="form">
-    <input type="text" id="username" v-model="username" placeholder="Имя пользователя" />
-    <input type="email" id="email" v-model="email" placeholder="Почта" />
-    <input type="password" id="password" v-model="password" placeholder="Пароль" />
+    <input type="text" id="username" v-model="username" placeholder="Имя пользователя" maxlength="15" />
+    <input type="email" id="email" v-model="email" placeholder="Почта" maxlength="25" />
+    <input type="password" id="password" v-model="password" placeholder="Пароль" maxlength="20" />
     <button @click="registerUser" class="form__btn">Зарегистрироваться</button>
     <pre>{{ errorMessages }}</pre>
   </div>
