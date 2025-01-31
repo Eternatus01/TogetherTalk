@@ -10,7 +10,7 @@
                 <Avatar :size="50" :username="usr" />
                 <div class="profile-text">
                     <small>Username</small>
-                    <h2 class="profile-name">{{ username }}</h2>
+                    <h2 class="profile-name">{{ usr }}</h2>
                 </div>
             </div>
         </section>
