@@ -1,6 +1,6 @@
 <template>
     <div class="home-view">
-        <h1 style="color: white; margin-bottom: 1rem;">Последние публикации</h1>
+        <h1 style="color: white; margin-bottom: 1rem;">Последние публикации:</h1>
         <PostList :posts="sortedPosts" />
     </div>
 </template>
