@@ -1,8 +1,8 @@
 <template>
   <div>
-    <h3>Запросы в друзья</h3>
+    <h3 class="notices-title">Запросы в друзья</h3>
     <ul>
-      <li v-for="notice of notices" :key="notice.id">
+      <li v-for="notice of notices" :key="notice.id" class="noteces-content">
         <h4>{{ notice.message }}</h4>
         <div class="btns">
           <button v-if="notice.notice_type === 'cancelFriend'" @click="acceptNotice(notice.id)">Ок</button>

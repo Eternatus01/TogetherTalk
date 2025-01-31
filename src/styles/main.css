@@ -1,3 +1,14 @@
+* {
+  margin: 0;
+  padding: 0;
+  color: black;
+  text-decoration: none;
+  list-style: none;
+  outline: none;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
   font-size: 16px;
@@ -6,17 +17,16 @@ body {
   line-height: 1.6;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  color: black;
-  text-decoration: none;
-  outline: none;
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
 }
 
 header {
   padding: 16px 0;
   text-align: center;
+  color: white;
 }
 
 nav {
@@ -85,25 +95,42 @@ nav a:hover {
       -ms-flex-align: center;
           align-items: center;
 }
-.form * {
-  border-radius: 4px;
-}
 .form input {
   width: 16rem;
   padding: 16px;
+  border-radius: 4px;
+  border: 1px solid #34495e;
 }
 .form__btn {
   cursor: pointer;
   width: 18rem;
   padding: 16px;
   background-color: #3498db;
-  color: #fff;
+  color: white;
   border: 0;
   font-size: 1.5rem;
-  -webkit-transition: all 0.1s ease-in-out;
-  transition: all 0.1s ease-in-out;
+  border-radius: 4px;
+  -webkit-transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 .form__btn:hover {
+  background-color: #3da1e4;
+}
+
+.btn_comments {
+  cursor: pointer;
+  margin-top: 1rem;
+  width: 12rem;
+  padding: 1rem;
+  background-color: #3498db;
+  color: white;
+  border: 0;
+  font-size: 1rem;
+  border-radius: 4px;
+  -webkit-transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease;
+}
+.btn_comments:hover {
   background-color: #3da1e4;
 }
 
@@ -113,6 +140,9 @@ nav a:hover {
   background-color: #34495e;
   border-radius: 24px;
   padding: 24px;
+  scroll-behavior: smooth;
+  contain: strict;
+  will-change: transform;
 }
 
 .message {
@@ -143,50 +173,6 @@ nav a:hover {
   color: #e0e0e0;
 }
 
-.container {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.dark-theme {
-  background-color: #1a1d23;
-  color: #ecf0f1;
-  border-color: #2c3e50;
-}
-.dark-theme header {
-  background-color: #2c3e50;
-}
-.dark-theme nav {
-  background-color: #1a1d23;
-}
-.dark-theme .container {
-  background-color: #2c3e50;
-}
-
-.button {
-  background-color: #3498db;
-  border: none;
-  padding: 10px 20px;
-  font-size: 1rem;
-  cursor: pointer;
-  -webkit-box-shadow: 0 0 10px #34495e;
-          box-shadow: 0 0 10px #34495e;
-  color: white;
-}
-
-.input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 16px;
-  border: 1px solid #34495e;
-  -webkit-box-shadow: 0 0 10px #34495e;
-          box-shadow: 0 0 10px #34495e;
-}
-
-.icon * {
-  color: white;
-}
-
 .profile {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -207,30 +193,6 @@ nav a:hover {
   border-radius: 8px;
   -webkit-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: start;
-}
-
-.setting {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
-      -ms-flex-direction: column;
-          flex-direction: column;
-  -webkit-box-align: start;
-      -ms-flex-align: start;
-          align-items: start;
-  -webkit-box-pack: center;
-      -ms-flex-pack: center;
-          justify-content: center;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  -webkit-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%;
   text-align: start;
 }
 
@@ -270,23 +232,18 @@ nav a:hover {
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.post-input {
-  width: 96%;
-  padding: 0.8rem;
-  margin-bottom: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
+.post-input,
 .post-textarea {
   width: 96%;
   padding: 0.8rem;
   margin-bottom: 1rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-family: inherit;
   font-size: 1rem;
+  font-family: inherit;
+}
+
+.post-textarea {
   resize: vertical;
 }
 
@@ -301,17 +258,15 @@ nav a:hover {
   -webkit-transition: background 0.3s ease;
   transition: background 0.3s ease;
 }
-.post-button span {
-  color: white;
-}
-
 .post-button:hover {
   background: #3aa876;
 }
-
 .post-button:disabled {
   background: #a0d9bb;
   cursor: not-allowed;
+}
+.post-button span {
+  color: white;
 }
 
 .post {
@@ -322,6 +277,13 @@ nav a:hover {
   -webkit-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   word-wrap: break-word;
+}
+
+.grades {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 1rem;
 }
 
 .info-user {
@@ -351,10 +313,6 @@ nav a:hover {
   font-size: 0.9em;
 }
 
-.create-and-posts .post:nth-child(1) {
-  border-radius: 0 0 8px 8px;
-}
-
 .likes {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -373,7 +331,6 @@ nav a:hover {
 }
 
 .post-content {
-  cursor: pointer;
   line-height: 1.5;
   white-space: normal;
   overflow: hidden;
@@ -381,10 +338,36 @@ nav a:hover {
   max-height: 6em;
   max-width: 1400px;
 }
-
 .post-content-title {
   font-size: 1.2em;
   margin-bottom: 1rem;
+}
+.post-content-btn {
+  cursor: pointer;
+}
+
+.setting {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: start;
+      -ms-flex-align: start;
+          align-items: start;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  -webkit-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  text-align: start;
 }
 
 .expand {
@@ -400,22 +383,20 @@ nav a:hover {
   max-width: 500px;
 }
 
-.friends-list {
+.friends-list,
+.users_search,
+.notices {
   background-color: white;
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 8px;
 }
 
-.users_search {
-  background: white;
-  border-radius: 8px;
-  padding: 1rem;
+.notices-title {
+  font-size: 1.2em;
+  margin-bottom: 1rem;
 }
 
-.grades {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  gap: 1rem;
+.noteces-content {
+  padding-left: 0.5rem;
 }

@@ -1,8 +1,17 @@
-// Импорт переменных и миксинов
 @import 'variables';
 @import 'mixins';
 
-// Основной стиль
+// Базовые стили
+* {
+  margin: 0;
+  padding: 0;
+  color: black;
+  text-decoration: none;
+  list-style: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
 body {
   font-family: $font-family;
   font-size: $base-font-size;
@@ -11,32 +20,34 @@ body {
   line-height: 1.6;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  color: black;
-  text-decoration: none;
-  outline: none;
+// Контейнер
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 $padding;
 }
 
-// Стиль для header
+// Хедер
 header {
   padding: $padding 0;
   text-align: center;
+  color: white;
 }
 
-// Стиль для навигации
+// Навигация
 nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 24px;
+
   a {
     color: white;
     text-decoration: none;
     font-size: 24px;
     display: flex;
     align-items: center;
+
     &:hover {
       color: $hover-color;
     }
@@ -60,8 +71,7 @@ nav {
   }
 }
 
-// Стиль для форм
-
+// Формы
 .form {
   height: 80vh;
   display: flex;
@@ -70,13 +80,11 @@ nav {
   gap: 1rem;
   align-items: center;
 
-  * {
-    border-radius: 4px;
-  }
-
   input {
     width: 16rem;
     padding: $padding;
+    border-radius: 4px;
+    border: 1px solid $border-color;
   }
 
   &__btn {
@@ -84,24 +92,45 @@ nav {
     width: 18rem;
     padding: $padding;
     background-color: $primary-color;
-    color: #fff;
+    color: white;
     border: 0;
     font-size: $font-size-heading;
-    transition: all 0.1s ease-in-out;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+
     &:hover {
       background-color: $primary-color-hover;
     }
   }
 }
 
-// Стиль для чатов
+.btn_comments {
+  cursor: pointer;
+  margin-top: 1rem;
+  width: 12rem;
+  padding: 1rem;
+  background-color: $primary-color;
+  color: white;
+  border: 0;
+  font-size: $font-size-body;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
 
+  &:hover {
+    background-color: $primary-color-hover;
+  }
+}
+
+// Чат
 .messages {
   height: 600px;
   overflow-y: auto;
   background-color: $border-color;
   border-radius: 24px;
   padding: 24px;
+  scroll-behavior: smooth;
+  contain: strict;
+  will-change: transform;
 }
 
 .message {
@@ -130,55 +159,7 @@ nav {
   }
 }
 
-// Стиль для контейнера
-.container {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-// Стиль для темной темы
-.dark-theme {
-  @include dark-theme;
-
-  header {
-    background-color: $dark-primary-color;
-  }
-
-  nav {
-    background-color: $dark-secondary-color;
-  }
-
-  .container {
-    background-color: $dark-primary-color;
-  }
-}
-
-// Стиль для кнопок
-.button {
-  background-color: $primary-color;
-  border: none;
-  padding: 10px 20px;
-  font-size: $font-size-body;
-  cursor: pointer;
-  @include box-shadow($border-color);
-  color: white;
-}
-
-// Стиль для полей ввода
-.input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: $margin;
-  border: 1px solid $border-color;
-  @include box-shadow($border-color);
-}
-
-.icon {
-  * {
-    color: white;
-  }
-}
-
+// Профиль
 .profile {
   display: flex;
   flex-direction: column;
@@ -189,20 +170,6 @@ nav {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: start;
-}
-
-.setting {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  justify-content: center;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%;
   text-align: start;
 }
 
@@ -222,6 +189,7 @@ nav {
   flex-direction: column;
 }
 
+// Посты
 .create-post {
   background: white;
   padding: 1rem;
@@ -229,23 +197,18 @@ nav {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.post-input {
-  width: 96%;
-  padding: 0.8rem;
-  margin-bottom: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
+.post-input,
 .post-textarea {
   width: 96%;
   padding: 0.8rem;
   margin-bottom: 1rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-family: inherit;
   font-size: 1rem;
+  font-family: inherit;
+}
+
+.post-textarea {
   resize: vertical;
 }
 
@@ -259,18 +222,18 @@ nav {
   font-size: 1rem;
   transition: background 0.3s ease;
 
+  &:hover {
+    background: #3aa876;
+  }
+
+  &:disabled {
+    background: #a0d9bb;
+    cursor: not-allowed;
+  }
+
   span {
     color: white;
   }
-}
-
-.post-button:hover {
-  background: #3aa876;
-}
-
-.post-button:disabled {
-  background: #a0d9bb;
-  cursor: not-allowed;
 }
 
 .post {
@@ -280,6 +243,11 @@ nav {
   margin-bottom: 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   word-wrap: break-word;
+}
+
+.grades {
+  display: flex;
+  gap: 1rem;
 }
 
 .info-user {
@@ -299,12 +267,6 @@ nav {
   font-size: 0.9em;
 }
 
-.create-and-posts {
-  .post:nth-child(1) {
-    border-radius: 0 0 8px 8px;
-  }
-}
-
 .likes {
   display: flex;
   align-items: center;
@@ -319,18 +281,35 @@ nav {
 }
 
 .post-content {
-  cursor: pointer;
   line-height: 1.5;
   white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
   max-height: 6em;
   max-width: 1400px;
+
+  &-title {
+    font-size: 1.2em;
+    margin-bottom: 1rem;
+  }
+
+  &-btn {
+    cursor: pointer;
+  }
 }
 
-.post-content-title {
-  font-size: 1.2em;
-  margin-bottom: 1rem;
+.setting {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  text-align: start;
 }
 
 .expand {
@@ -346,20 +325,21 @@ nav {
   max-width: 500px;
 }
 
-.friends-list {
+// Друзья и уведомления
+.friends-list,
+.users_search,
+.notices {
   background-color: white;
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 8px;
 }
 
-.users_search {
-  background: white;
-  border-radius: 8px;
-  padding: 1rem;
+.notices-title {
+  font-size: 1.2em;
+  margin-bottom: 1rem;
 }
 
-.grades {
-  display: flex;
-  gap: 1rem;
+.noteces-content {
+  padding-left: 0.5rem;
 }

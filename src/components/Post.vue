@@ -9,7 +9,7 @@
             'expand': expands[index] || props.full,
             'full': props.full
         }">{{ props.post.text }}</div>
-        <div v-if="!props.full" class="post-content" v-show="props.post.text.length > 300"
+        <div v-if="!props.full" class="post-content-btn" v-show="props.post.text.length > 300"
             @click="() => expands[index] = !expands[index]">
             {{
                 expands[index] ? "Свернуть" : "Развернуть" }}</div>

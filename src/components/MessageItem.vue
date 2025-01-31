@@ -2,16 +2,15 @@
     <div class="asda">
         <div class="message">
             <Avatar :username="username" />
-            <strong>{{ username || 'Загрузка...' }}:</strong> 
-            {{ message.content }}
-            <pre>{{ message.formattedTime }}</pre>
-        </div>
-        <div v-if="isOwnMessage" class="dropdown">
-            <button @click="toggleDropdown" class="message__btn">⋮</button>
-            <div v-if="isDropdownActive" class="dropdown-content">
-                <button @click="$emit('edit')">Редактировать</button>
-                <button @click="$emit('delete')">Удалить</button>
+            <strong>{{ username || 'Загрузка...' }}:</strong>
+            <div class="message-content">
+                <div v-if="message.content">{{ message.content }}</div>
+                <div v-if="message.image_url" class="message-image">
+                    <img :src="message.image_url" alt="Прикрепленное изображение" class="uploaded-image"
+                        loading="lazy" />
+                </div>
             </div>
+            <pre>{{ message.formattedTime }}</pre>
         </div>
     </div>
 </template>
@@ -37,6 +36,9 @@ const toggleDropdown = () => {
 </script>
 
 <style scoped>
+* {
+    color: white;
+}
 .asda {
     display: flex;
     gap: 20px;
@@ -52,5 +54,17 @@ const toggleDropdown = () => {
     display: flex;
     flex-direction: column;
     gap: 5px;
+}
+
+.uploaded-image {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
 }
 </style>

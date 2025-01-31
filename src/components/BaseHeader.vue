@@ -4,7 +4,7 @@
       <router-link to="/" class="nav__logo">TogetherTalk</router-link>
       <div class="nav__links">
         <router-link v-for="route in routes" :key="route.name" :to="route.path" class="nav__link">
-          <component :is="route.icon" class="nav__icon" />
+          <component :is="route.icon" />
           {{ route.name }}
         </router-link>
         <a @click="logout" v-if="user" class="nav__link">
@@ -23,6 +23,7 @@ import ProfileIcon from '../components/icons/ProfileIcon.vue';
 import FriendsIcon from '../components/icons/FriendsIcon.vue';
 import ChatIcon from '../components/icons/ChatIcon.vue';
 import LogOutIcon from '../components/icons/LogOutIcon.vue';
+import NoticeIcon from '../components/icons/NoticeIcon.vue';
 
 const userStore = useUser();
 const user = ref(computed(() => userStore.user));
@@ -38,7 +39,7 @@ const updateRoutes = () => {
       { path: `/profile/${userStore.user.username}`, name: 'Профиль', icon: markRaw(ProfileIcon) },
       { path: '/friends', name: 'Друзья', icon: markRaw(FriendsIcon) },
       { path: '/chats', name: 'Чаты', icon: markRaw(ChatIcon) },
-      { path: '/notices', name: 'Уведомления' },
+      { path: '/notices', name: 'Уведомления', icon: markRaw(NoticeIcon) },
     ]
     : [
       { path: '/login', name: 'Вход' },

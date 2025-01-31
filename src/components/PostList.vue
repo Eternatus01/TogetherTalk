@@ -2,7 +2,7 @@
   <section>
     <div v-for="(post, index) in posts" :key="post.id" class="post">
       <Post :post="post" :index="index" :posts="posts" />
-      <button @click="togglePostView(post.id)">Комментарии</button>
+      <button @click="togglePostView(post.id)" class="btn_comments">Комментарии</button>
       <PostView v-if="expandedPosts[post.id]" :post="post" :index="index" :posts="posts"
         :togglePostView="() => togglePostView(post.id)" />
     </div>

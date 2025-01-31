@@ -1,7 +1,6 @@
 <template>
   <section class="setting">
     <router-link :to="`/profile/${userData.username}`"><span class="material-icons">назад в профиль</span></router-link>
-
     <AvatarUploader :size="50" />
     <EditableField label="Никнейм" :value="userData.username" inputType="text" name="username" :error="error"
       @save="changeUserStore.changeUsername($event)" />

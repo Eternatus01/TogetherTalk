@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="notices">
         <friend-requests :user_id="user_id"></friend-requests>
     </div>
 </template>

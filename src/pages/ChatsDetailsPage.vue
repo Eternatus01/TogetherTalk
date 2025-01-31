@@ -9,13 +9,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, reactive, computed, nextTick, watch } from 'vue';
+import { ref, onMounted, reactive, computed, nextTick, watch, onBeforeUnmount } from 'vue';
 import supabase from '../service/SupaBase';
 import { useRoute } from 'vue-router';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { useUser } from '../stores/userStore/user';
+import { debounce } from 'lodash-es';
 
 import MessagesList from '../components/MessagesList.vue';
 import MessageInput from '../components/MessageInput.vue';
@@ -40,6 +41,7 @@ const state = reactive({
     editingMessageId: null,
     editedContent: ''
 });
+
 
 // Реактивное обновление отредактированного контента
 const updateEditedContent = (content) => {
@@ -129,18 +131,21 @@ const fetchMessages = async () => {
         if (error) throw error;
 
         if (data.length > 0) {
-            lastMessageDate.value = data[data.length - 1].created_at;
-            const newMessages = data.reverse();
+            // Сохраняем предыдущую высоту контейнера
+            const container = messagesContainer.value.$el;
+            const prevScrollHeight = container.scrollHeight;
 
+            // Добавляем новые сообщения в начало
             messages.value = [
-                ...newMessages,
+                ...data.reverse(),
                 ...messages.value
             ];
 
+            // Ждем обновления DOM
             await nextTick();
-            if (messagesContainer.value) {
-                messagesContainer.value.scrollToBottom();
-            }
+
+            // Восстанавливаем позицию прокрутки
+            container.scrollTop = container.scrollHeight - prevScrollHeight;
         }
     } catch (error) {
         handleError(error);
@@ -172,26 +177,24 @@ const subscribeToMessages = () => {
 const handlePayload = (payload) => {
     switch (payload.eventType) {
         case 'INSERT':
-            // Проверяем, нет ли уже такого сообщения
-            if (!messages.value.some(m => m.id === payload.new.id)) {
+            if (new Date(payload.new.created_at) > new Date(messages.value[messages.value.length - 1]?.created_at)) {
                 messages.value = [...messages.value, payload.new];
-                scrollDown();
             }
             break;
 
         case 'UPDATE':
             messages.value = messages.value.map(msg =>
                 msg.id === payload.new.id ? payload.new : msg
-            );
+            )
             break;
 
         case 'DELETE':
             messages.value = messages.value.filter(msg =>
                 msg.id !== payload.old.id
-            );
+            )
             break;
     }
-};
+}
 
 // Оптимизированная прокрутка
 const scrollDown = () => {
@@ -199,26 +202,28 @@ const scrollDown = () => {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
 
-const handleScroll = (event) => {
+const handleScroll = debounce((event) => {
     if (event.target.scrollTop === 0) {
         fetchMessages();
     }
-};
+}, 200);
 
 // Отправка сообщений с троттлингом
-const sendMessage = async () => {
+const sendMessage = async (payload) => {
     try {
-        const content = newMessage.value.trim();
-        if (!content) return;
+        const content = payload.text.trim();
+        const imageUrl = payload.imageUrl;
 
-        // Оптимистичное обновление
+        if (!content && !imageUrl) return;
+
         const tempMessage = {
-            id: Date.now().toString(), // временный ID
+            id: Date.now().toString(),
             chat_id: chatId,
             sender_id: user.value.id,
             content: content,
+            image_url: imageUrl,
             created_at: new Date().toISOString(),
-            is_temp: true // флаг временного сообщения
+            is_temp: true
         };
 
         messages.value = [...messages.value, tempMessage];
@@ -228,20 +233,20 @@ const sendMessage = async () => {
             .insert([{
                 chat_id: chatId,
                 sender_id: user.value.id,
-                content: content
+                content: content,
+                image_url: imageUrl
             }])
-            .select('*'); // Важно: запрашиваем возврат вставленной записи
+            .select('*');
 
         if (error) throw error;
         scrollDown()
-        // Заменяем временное сообщение на настоящее
+        setTimeout(() => scrollDown(), 800)
         messages.value = messages.value.map(msg =>
             msg.is_temp ? data[0] : msg
         );
 
         newMessage.value = '';
     } catch (error) {
-        // Откатываем изменения при ошибке
         messages.value = messages.value.filter(msg => !msg.is_temp);
         handleError(error);
     }
@@ -290,24 +295,23 @@ const handleError = (error) => {
     // Можно добавить обработку ошибок в UI
 };
 
+const lastVisibilityChange = ref(Date.now());
+
 const handleVisibilityChange = async () => {
     if (document.visibilityState === 'visible') {
-        await fetchMessages();
-        await loadUserData();
+        // Только если прошло больше 30 секунд
+        if (Date.now() - lastVisibilityChange.value > 30000) {
+            await fetchMessages();
+            await loadUserData();
+        }
     }
+    lastVisibilityChange.value = Date.now();
 };
-
-onMounted(() => {
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-});
-
-onUnmounted(() => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-});
 
 watch(
     () => messages.value,
     async (newMessages) => {
+        scrollDown();
         if (newMessages.length > 0) {
             await loadUserData();
         }
@@ -317,18 +321,20 @@ watch(
 
 onMounted(async () => {
     try {
+        scrollDown();
+        document.addEventListener('visibilitychange', handleVisibilityChange);
         await fetchMessages();
         subscribeToMessages();
-        scrollDown();
     } catch (error) {
         console.error('Ошибка инициализации:', error);
     }
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
     if (messagesChannel) {
         supabase.removeChannel(messagesChannel);
     }
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 </script>
 
@@ -363,11 +369,5 @@ onUnmounted(() => {
 
 .dropdown-content button:hover {
     background-color: var(--hover-bg);
-}
-
-.messages {
-    height: 100%;
-    overflow-y: auto;
-    /* остальные стили */
 }
 </style>
