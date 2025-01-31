@@ -1,6 +1,7 @@
 <template>
     <div class="avatar" :style="avatarStyles">
         <img v-if="avatarUrl && !error" :src="avatarUrl" alt="User avatar" @error="handleImageError">
+        <slot></slot>
     </div>
 </template>
 

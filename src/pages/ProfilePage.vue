@@ -1,15 +1,15 @@
 <template>
     <section>
-        <section class="profile">
-            <div v-if="user">
+        <section class="profile setting_avatar">
+            <div v-if="user" class="settings_icon">
                 <router-link to="/settings" v-if="user_id === user.id"><span
-                        class="material-icons">Настройки</span></router-link>
+                        class="material-icons">⚙️</span></router-link>
             </div>
 
             <div class="profile-info">
-                <Avatar :size="50" :username="usr" />
+                <Avatar :size="50" :username="usr">
+                </Avatar>
                 <div class="profile-text">
-                    <small>Username</small>
                     <h2 class="profile-name">{{ usr }}</h2>
                 </div>
             </div>
@@ -20,7 +20,7 @@
                 <PostList :posts="userPosts" />
             </section>
             <PostList v-else-if="user_id" :posts="userPosts" />
-        </div>
+        </div>⚙️
     </section>
 </template>
 
@@ -85,5 +85,16 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .avatar {
     border-radius: 50%;
+}
+
+.setting_avatar {
+    position: relative;
+}
+
+.settings_icon {
+    position: absolute;
+    top: 5%;
+    right: 5%;
+    font-size: 32px;
 }
 </style>

@@ -1,5 +1,8 @@
 <template>
   <div class="create-post">
+    <h2>
+      Создать пост:
+    </h2>
     <input type="text" v-model="title" placeholder="Заголовок" class="post-input" maxlength="60">
     <textarea v-model="text" placeholder="Что у вас нового?" rows="3" class="post-textarea" maxlength="1000"></textarea>
     <button @click="createPost" :disabled="!isFormValid || isLoading" class="post-button">
