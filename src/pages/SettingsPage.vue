@@ -5,7 +5,7 @@
     <EditableField label="Никнейм" :value="userData.username" inputType="text" name="username" :error="error"
       @save="changeUserStore.changeUsername($event)" />
     <EditableField label="Дата рождения" :value="formattedBirthdate" inputType="date" name="birthdate" :error="error"
-      @save="updateProfileField('birthdate', $event)" />
+      @save="changeUserStore.changeBirthdate($event)" />
   </section>
 </template>
 

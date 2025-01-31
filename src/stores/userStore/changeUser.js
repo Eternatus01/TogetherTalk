@@ -19,12 +19,12 @@ export const useChangeUser = defineStore('changeUser ', () => {
   };
 
   // В вашем changeUser  store (например, в userStore/changeUser .js)
-  const changeBirthdate = async (userId, newBirthdate) => {
+  const changeBirthdate = async (newBirthdate) => {
     try {
       const { data, error } = await supabase
         .from('users')
         .update({ birthdate: newBirthdate })
-        .eq('id', userId);
+        .eq('id', userStore.user.id);
 
       if (error) throw error;
       return data;
