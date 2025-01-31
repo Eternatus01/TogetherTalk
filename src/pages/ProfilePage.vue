@@ -7,7 +7,7 @@
             </div>
 
             <div class="profile-info">
-                <Avatar :size="50" :username="username" />
+                <Avatar :size="50" :username="usr" />
                 <div class="profile-text">
                     <small>Username</small>
                     <h2 class="profile-name">{{ username }}</h2>
@@ -31,10 +31,13 @@ import { useUser } from '../stores/userStore/user';
 import Avatar from '../components/Avatar.vue'
 import PostList from '../components/PostList.vue';
 import CreatePost from '../components/CreatePost.vue';
+import { useRoute } from 'vue-router';
 
+const route = useRoute();
 const userStore = useUser();
 const user = computed(() => userStore.user)
-const username = ref('');
+const username = ref(route.params.username);
+const usr = ref(username.value)
 const email = ref('');
 const imageUrl = ref('');
 const user_id = ref('');
@@ -53,13 +56,13 @@ const saveUserToUrl = () => {
 const getUserFromUrl = async () => {
     const url = window.location;
     const username1 = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
-    const data = await userStore.getUserByUsername(username1)
-    if (username1) {
-        username.value = username1;
-        email.value = data.email;
-        imageUrl.value = data.avatar_url;
-        user_id.value = data.id
-    }
+    const data = await userStore.getUserByUsername(username.value)
+
+    username.value = username1;
+    email.value = data.email;
+    imageUrl.value = data.avatar_url;
+    user_id.value = data.id
+
     await fetchPosts();
 };
 
@@ -77,7 +80,6 @@ const fetchPosts = async () => {
 onMounted(async () => {
     saveUserToUrl();
 });
-
 </script>
 
 <style lang="scss" scoped>
