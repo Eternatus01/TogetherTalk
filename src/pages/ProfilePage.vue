@@ -20,7 +20,7 @@
                 <PostList :posts="userPosts" />
             </section>
             <PostList v-else-if="user_id" :posts="userPosts" />
-        </div>⚙️
+        </div>
     </section>
 </template>
 
