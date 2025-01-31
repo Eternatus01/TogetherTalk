@@ -35,7 +35,7 @@ const logout = async () => {
 const updateRoutes = () => {
   routes.value = user.value !== null
     ? [
-      { path: '/profile/personal', name: 'Профиль', icon: markRaw(ProfileIcon) },
+      { path: `/profile/${userStore.user.username}`, name: 'Профиль', icon: markRaw(ProfileIcon) },
       { path: '/friends', name: 'Друзья', icon: markRaw(FriendsIcon) },
       { path: '/chats', name: 'Чаты', icon: markRaw(ChatIcon) },
       { path: '/notices', name: 'Уведомления' },

@@ -22,6 +22,10 @@ export const useUser = defineStore('user', () => {
     avatar_url: null,
     usernamesCache: {},
     session: null,
+    avatarsCache: {
+      byUserId: {},
+      byUsername: {},
+    },
   });
 
   // Геттеры
@@ -94,12 +98,20 @@ export const useUser = defineStore('user', () => {
       state.username = userData.username;
       state.birthdate = userData.birthdate;
       state.avatar_url = userData.avatar_url;
+      if (userData?.id) {
+        state.avatarsCache.byUserId[userData.id] = userData.avatar_url;
+      }
+      if (userData?.username) {
+        state.avatarsCache.byUsername[userData.username] = userData.avatar_url;
+      }
     },
 
     async logout() {
       try {
         await supabase.auth.signOut();
         state.currentUser = null;
+        state.avatarsCache.byUserId = {};
+        state.avatarsCache.byUsername = {};
         Cookies.remove('userSession');
         router.push('/');
       } catch (error) {
@@ -122,6 +134,11 @@ export const useUser = defineStore('user', () => {
 
         const { data, error } = await query;
         if (error) throw error;
+
+        data.forEach((user) => {
+          state.avatarsCache.byUserId[user.id] = user.avatar_url;
+          state.avatarsCache.byUsername[user.username] = user.avatar_url;
+        });
 
         return data;
       } catch (error) {
@@ -151,6 +168,10 @@ export const useUser = defineStore('user', () => {
 
       try {
         if (!userId) return defaultAvatar;
+        // Проверка кэша
+        if (state.avatarsCache.byUserId[userId]) {
+          return state.avatarsCache.byUserId[userId];
+        }
 
         const { data, error } = await supabase
           .from('users')
@@ -158,7 +179,47 @@ export const useUser = defineStore('user', () => {
           .eq('id', userId)
           .single();
 
-        return error ? defaultAvatar : data.avatar_url || defaultAvatar;
+        const avatar = error ? defaultAvatar : data.avatar_url || defaultAvatar;
+
+        // Сохраняем в кэш
+        state.avatarsCache.byUserId[userId] = avatar;
+        if (data?.username) {
+          state.avatarsCache.byUsername[data.username] = avatar;
+        }
+
+        return avatar;
+      } catch (error) {
+        return defaultAvatar;
+      }
+    },
+
+    async getAvatarByUsername(username) {
+      const defaultAvatar =
+        'https://kawdmbqsvrrmvhymflnx.supabase.co/storage/v1/object/public/avatars/avatars/default-avatar-icon-of-social-media-user-vector.jpg';
+      try {
+        if (!username) return defaultAvatar;
+        // Проверка кэша
+        if (state.avatarsCache.byUsername[username]) {
+          return state.avatarsCache.byUsername[username];
+        }
+
+        const { data, error } = await supabase
+          .from('users')
+          .select('avatar_url, id')
+          .eq('username', username)
+          .single();
+
+
+        const avatar = error ? defaultAvatar : data.avatar_url || defaultAvatar;
+
+        // Сохраняем в кэш
+        state.avatarsCache.byUsername[username] = avatar;
+
+        if (data?.id) {
+          state.avatarsCache.byUserId[data.id] = avatar;
+        }
+
+        return avatar;
       } catch (error) {
         return defaultAvatar;
       }
@@ -198,6 +259,12 @@ export const useUser = defineStore('user', () => {
 
         if (error) throw error;
 
+        if (updates.avatar_url) {
+          state.avatarsCache.byUserId[state.currentUser.id] =
+            updates.avatar_url;
+          state.avatarsCache.byUsername[state.currentUser.username] =
+            updates.avatar_url;
+        }
         this.updateUserState({ ...state.currentUser, ...data });
         return data;
       } catch (error) {

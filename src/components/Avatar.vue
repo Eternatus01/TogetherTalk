@@ -9,17 +9,16 @@ import { ref, watch, computed } from 'vue';
 import { useUser } from '../stores/userStore/user';
 
 const props = defineProps({
-    userId: {
-        type: String,
-        required: true
-    },
     size: {
         type: Number,
-        default: 40
+        default: 12
     },
     rounded: {
         type: Boolean,
         default: true
+    },
+    username: {
+        type: String
     }
 });
 
@@ -30,7 +29,7 @@ const avatarUrl = ref(null);
 const loadAvatar = async () => {
     try {
         error.value = false;
-        const data = await userStore.getAvatar(props.userId)
+        const data = await userStore.getAvatarByUsername(props.username)
         avatarUrl.value = data;
     } catch (err) {
         error.value = true;
@@ -43,13 +42,13 @@ const handleImageError = () => {
 };
 
 const avatarStyles = computed(() => ({
-    width: `${props.size}px`,
-    height: `${props.size}px`,
+    width: `${props.size * 4}px`,
+    height: `${props.size * 4}px`,
     borderRadius: props.rounded ? '50%' : '4px',
     fontSize: `${props.size * 0.4}px`
 }));
 
-watch(() => props.userId, loadAvatar, { immediate: true });
+watch(() => props.username, loadAvatar, { immediate: true });
 </script>
 
 <style scoped>

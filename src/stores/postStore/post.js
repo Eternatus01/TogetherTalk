@@ -10,7 +10,7 @@ export const usePost = defineStore('posts', () => {
   const lastFetch = ref(null);
   const cacheDuration = 5 * 60 * 1000;
   const userStore = useUser();
-  const username = computed(() => userStore.user?.username);
+  const id = computed(() => userStore.user?.id);
 
   // Getters
   const sortedPosts = computed(() => {
@@ -37,19 +37,41 @@ export const usePost = defineStore('posts', () => {
 
   const addLike = async (post) => {
     try {
-      if (post.like.includes(username.value)) {
-        const currentLissLike = post.like.filter((f) => f !== username.value);
+      if (post.likes.includes(id.value)) {
+        const currentLissLike = post.likes.filter((f) => f !== id.value);
 
         const { error } = await supabase
           .from('posts')
-          .update({ like: currentLissLike })
+          .update({ likes: currentLissLike })
           .eq('id', post.id);
       } else {
-        const newLikes = [...post.like, username.value];
+        const newLikes = [...post.likes, id.value];
 
         const { error } = await supabase
           .from('posts')
-          .update({ like: newLikes })
+          .update({ likes: newLikes })
+          .eq('id', post.id);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addDislike = async (post) => {
+    try {
+      if (post.dislike.includes(id.value)) {
+        const currentDislikes = post.likes.filter((f) => f !== id.value);
+
+        await supabase
+          .from('posts')
+          .update({ dislike: currentDislikes })
+          .eq('id', post.id);
+      } else {
+        const newDislikes = [...post.dislike, id.value];
+
+        await supabase
+          .from('posts')
+          .update({ dislike: newDislikes })
           .eq('id', post.id);
       }
     } catch (e) {
@@ -79,7 +101,6 @@ export const usePost = defineStore('posts', () => {
       posts.value = data;
       lastFetch.value = Date.now();
 
-      console.log('posts user upload');
       const validated = validatePosts(data);
       return validated;
     } catch (error) {
@@ -118,6 +139,19 @@ export const usePost = defineStore('posts', () => {
     } catch (error) {
       console.error(`Error fetching posts for user ${userId}:`, error);
       throw error;
+    }
+  };
+
+  const fetchComments = async (id_posts) => {
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .select('*')
+        .eq('id_post', id_posts)
+        .order('created_at', { ascending: false });
+      return data;
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -175,5 +209,7 @@ export const usePost = defineStore('posts', () => {
     createPost,
     reset,
     addLike,
+    fetchComments,
+    addDislike,
   };
 });

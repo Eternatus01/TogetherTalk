@@ -1,7 +1,7 @@
 <template>
     <div class="asda">
         <div class="message">
-            <img :src="avatar" alt="" class="avatar" />
+            <Avatar :username="username" />
             <strong>{{ username || 'Загрузка...' }}:</strong> 
             {{ message.content }}
             <pre>{{ message.formattedTime }}</pre>
@@ -18,6 +18,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import Avatar from './Avatar.vue';
 
 const props = defineProps({
     message: Object,

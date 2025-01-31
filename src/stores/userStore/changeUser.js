@@ -6,12 +6,13 @@ import { useUser } from './user';
 export const useChangeUser = defineStore('changeUser ', () => {
   const errors = useErrorsUser();
   const userStore = useUser();
-  const updateAvatarUrl = async (userId, avatarUrl) => {
+
+  const updateAvatarUrl = async (avatarUrl) => {
     const { error } = await supabase
       .from('users')
       .update({ avatar_url: avatarUrl })
-      .eq('id', userId);
-    userStore.avatar_url = avatarUrl;
+      .eq('id', userStore.user.id);
+    userStore.user.avatar_url = avatarUrl;
     if (error) {
       throw new Error('Ошибка при обновлении URL аватара: ' + error.message);
     }
@@ -103,28 +104,34 @@ export const useChangeUser = defineStore('changeUser ', () => {
       }
     }
   };
-  const changeUsername = async (oldUsername, newUsername) => {
-    if (!(await validateUsername(newUsername))) {
-      return; // Если валидация не прошла, выходим из функции
+
+  const changeUsername = async (newUsername) => {
+    try {
+      const oldUsername = userStore.user.username; // Сохраняем старое имя
+
+      // 1. Обновляем имя пользователя в таблице users
+      const { data, error } = await supabase
+        .from('users')
+        .update({ username: newUsername })
+        .eq('id', userStore.user.id); // Используем ID для надёжности
+
+      if (error) throw error;
+
+      // 2. Обновляем все связанные посты
+      const { error: postError } = await supabase
+        .from('posts')
+        .update({ username: newUsername })
+        .eq('user_id', userStore.user.id); // Или .eq('username', oldUsername)
+
+      if (postError) throw postError;
+
+      // 3. Обновляем данные в хранилище
+      userStore.user.username = newUsername;
+      errors.clearErrors();
+    } catch (error) {
+      errors.setErrors(error.message || 'Ошибка при изменении имени');
+      console.error('Ошибка:', error);
     }
-
-    const { data, error } = await supabase
-      .from('users')
-      .update({ username: newUsername })
-      .eq('username', oldUsername)
-      .select();
-
-    console.log('то что пришло ', data[0]);
-    if (error) {
-      errors.setErrors('Ошибка при изменении имени пользователя');
-      console.error('Ошибка при изменении имени пользователя:', error);
-      return;
-    }
-
-    // Обновляем имена у друзей
-    await updateFriendsUsernames(oldUsername, newUsername);
-
-    errors.clearErrors();
   };
 
   const changeEmail = async (email, newEmail) => {

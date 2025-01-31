@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="friends-list">
     <h2>Друзья</h2>
     <ul>
       <li v-if="friends.length === 0">Список друзей пуст</li>

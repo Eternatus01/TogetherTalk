@@ -1,6 +1,6 @@
 <template>
     <div class="home-view">
-        <h1>Последние публикации</h1>
+        <h1 style="color: white; margin-bottom: 1rem;">Последние публикации</h1>
         <PostList :posts="sortedPosts" />
     </div>
 </template>
@@ -32,7 +32,6 @@ const fetchAllPosts = async () => {
 
 if (!userStore.isAuthenticated || userStore.user?.id) {
     onMounted(async () => {
-        console.log("123")
         await fetchAllPosts();
     });
 }

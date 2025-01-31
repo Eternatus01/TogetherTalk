@@ -17,11 +17,6 @@ const routes = [
     component: () => import('../pages/RegisterPage.vue'),
   },
   {
-    path: '/profile/personal',
-    name: 'PersonalProfile',
-    component: () => import('../pages/PersonalProfilePage.vue'),
-  },
-  {
     path: '/friends',
     name: 'Friends',
     component: () => import('../pages/FriendsPage.vue'),
@@ -35,6 +30,11 @@ const routes = [
     path: '/notices',
     name: 'Notices',
     component: () => import('../pages/NoticesPage.vue'),
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('../pages/SettingsPage.vue'),
   },
   {
     path: '/chats',

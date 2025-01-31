@@ -50,7 +50,6 @@ const loadUserData = async () => {
     try {
         // Получаем все уникальные ID отправителей из сообщений
         const senderIds = [...new Set(messages.value.map(m => m.sender_id))];
-
         // Загружаем данные только для отсутствующих пользователей
         const { data } = await supabase
             .from('users')
@@ -223,7 +222,7 @@ const sendMessage = async () => {
         };
 
         messages.value = [...messages.value, tempMessage];
-        
+
         const { data, error } = await supabase
             .from('messages')
             .insert([{
@@ -318,16 +317,8 @@ watch(
 
 onMounted(async () => {
     try {
-        // Первоначальная загрузка сообщений
         await fetchMessages();
-
-        // Загрузка данных пользователей для начальных сообщений
-        await loadUserData();
-
-        // Инициализация подписки
         subscribeToMessages();
-
-        // Прокрутка вниз после загрузки
         scrollDown();
     } catch (error) {
         console.error('Ошибка инициализации:', error);

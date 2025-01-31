@@ -6,7 +6,7 @@
         <input v-model="newValue" :type="inputType" :name="name" />
         <button @click="save">Сохранить</button>
       </div>
-      <pre style="color: red">{{ error }}</pre>
+      <pre>{{ error }}</pre>
     </div>
   </template>
   

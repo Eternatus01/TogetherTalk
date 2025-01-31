@@ -1,9 +1,11 @@
 <template>
   <div>
     <friends-list :friends="friends" :user="user" />
-    <user-search v-model:search="search" :search="search" :users="users" :loadUsers="loadUsers" />
-    <user-list :users="users" :addFriend="addFriend" :removeFriend="removeFriend" :isFriend="isFriend"
-      :notices="notices" />
+    <div class="users_search">
+      <user-search v-model:search="search" :search="search" :users="users" :loadUsers="loadUsers" />
+      <user-list :users="users" :addFriend="addFriend" :removeFriend="removeFriend" :isFriend="isFriend"
+        :notices="notices" />
+    </div>
   </div>
 </template>
 
@@ -30,7 +32,7 @@ const loadUsers = async () => {
   users.value = await userStore.getUsers(search.value);
 };
 
-// Проверяем, является ли пользователь другом
+// Проверяем, является ли пользователь другом1
 const isFriend = (id_friend) => {
   return friends.value.some((friend) => friend.id === id_friend);
 };
@@ -42,7 +44,6 @@ const addFriend = async (friend) => {
   await loadUsers();
   await friendStore.getFriends(user.value.id)
   await noticeStore.getNotices(user.value.id)
-
 };
 
 // Удаляем друга
