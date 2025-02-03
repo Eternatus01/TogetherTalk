@@ -21,12 +21,22 @@ export const useChangeUser = defineStore('changeUser ', () => {
   // В вашем changeUser  store (например, в userStore/changeUser .js)
   const changeBirthdate = async (newBirthdate) => {
     try {
+      const isoDate = new Date(newBirthdate).toISOString();
+
       const { data, error } = await supabase
         .from('users')
-        .update({ birthdate: newBirthdate })
-        .eq('id', userStore.user.id);
+        .update({ birthdate: isoDate })
+        .eq('id', userStore.user.id)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      userStore.updateUserState({
+        ...userStore.user,
+        birthdate: isoDate,
+      });
+
       return data;
     } catch (error) {
       console.error('Ошибка при изменении даты рождения:', error);

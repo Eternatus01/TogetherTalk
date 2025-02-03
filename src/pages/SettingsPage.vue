@@ -22,7 +22,7 @@ const userData = computed(() => userStore.user || {});
 const error = ref('');
 
 const formattedBirthdate = computed(() => {
-  if (!userData.value.birthdate) return '';
+  if (!userData.value?.birthdate) return '';
   return new Date(userData.value.birthdate).toISOString().split('T')[0];
 });
 </script>
